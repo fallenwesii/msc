@@ -1,6 +1,7 @@
 # msc
 
-Minimal Hyprland dotfiles.
+My swayfx configuration(msc).
+This is a port of my [minimal6](https://github.com/fallenwesii/minimal6) dotfiles to sway(swayfx), so if you value eye candy with flashy animation, it's worth checking.
 
 ## ✨ Features
 
@@ -17,16 +18,7 @@ Minimal Hyprland dotfiles.
 
 ## Screenshots
 
-<p align="center">
-  <img src="screenshots/Desktop.png" alt="Desktop" width="32%">
-  <img src="screenshots/wofi.png" alt="Wofi" width="32%">
-  <img src="screenshots/quick-settings.png" alt="Quick Settings" width="32%">
-  <img src="screenshots/wallpaper-switcher.png" alt="Wallpaper Switcher" width="32%">
-  <img src="screenshots/vscode.png" alt="vscode/vscodium" width="32%">
-  <img src="screenshots/yazi.png" alt="yazi" width="32%">
-
-</p>
-
+ ![msc](/screenshots/desktop.png)
 
 ## Setup
 
