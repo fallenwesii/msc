@@ -1,0 +1,71 @@
+@import "colors.css";
+
+window {
+  font-family: JetBrainsMono Nerd Font;
+  font-size: 14pt;
+  color: @background;
+  /* Mixes your wallpaper background color with 90% opacity */
+  background-color: alpha(@background, 0.97); 
+}
+
+button {
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100px;
+  border: 2px solid @background ;
+  border-radius: 0px;
+  background-color: @background ;
+  margin: 2.5px;
+  color: @primary; 
+}
+
+button:hover {
+  border: 2px solid @background;
+  border-radius: 0px;
+  background-color: @primary_fixed_dim;
+  color: @scrim;
+}
+
+button:active {
+  border-radius: 0px;
+  border: 2px solid @primary;
+  background-color: @on_background;
+  color: @on_background;
+}
+
+button:focus {
+  border-radius: 0px;
+  border: 2px solid @primary;
+  background-color: @background;
+  color: @primary;
+}
+
+#lock {
+  background-image: image(url("./lock.png"));
+  border: 2px solid @scrim ;
+}
+
+#logout {
+  background-image: image(url("./logout.png"));
+  border: 2px solid @scrim;
+}
+
+#suspend {
+  background-image: image(url("./sleep.png"));
+  border: 2px solid @scrim;
+}
+
+#shutdown {
+  background-image: image(url("./power.png"));
+  border: 2px solid @scrim;
+}
+
+#reboot {
+  background-image: image(url("./restart.png"));
+  border: 2px solid @scrim;
+}
+
+#hibernate {
+  background-image: image(url("./restart.png"));
+  border: 2px solid @scrim;
+}

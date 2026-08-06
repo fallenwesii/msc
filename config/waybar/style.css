@@ -1,0 +1,134 @@
+@import "colors.css";
+
+* {
+  font-family: "Jetbrains Mono NerdFont";
+}
+
+#waybar {
+  background: @background;
+  color: @on_surface_variant; 
+}
+
+/* --- LEFT MODULES (Workspaces & Clock) --- */
+
+#clock {
+  color:  @primary; 
+}
+
+#workspaces button {
+  color: @outline; 
+  padding-top: 0px;
+  padding-bottom: 0px;
+  padding-left: 6px;
+  padding-right: 6px;
+  margin: 0px 2px; 
+  border-radius: 4px;
+}
+
+#workspaces button.focused {
+  /* High visibility swap: Deep text over a shiny wallpaper accent */
+  color: @primary;
+  background-color: @background ;
+  font-weight: bold;
+}
+
+#workspaces button:hover {
+  color: @on_primary_container;
+  background-color: @primary_container;
+}
+
+#tray {
+  padding-left: 4px;
+}
+
+/* --- CENTER MODULE (Active Window) --- */
+
+#window {
+  color:  @primary; 
+}
+
+/* --- RIGHT MODULES (All System Icons & Statuses) --- */
+
+#memory,
+#cpu,
+#pulseaudio,
+#battery,
+#custom-nightmode,
+#custom-bluetooth,
+#network,
+#custom-powermenu,
+#custom-tuned,
+#custom-tuned.powersave,
+#custom-tuned.balanced,
+#custom-tuned.performance,
+#custom-network_speed {
+  color:  @primary; 
+}
+
+#battery.charging,
+#battery.plugged {
+  color: @primary; 
+}
+
+
+/* --- Waybar Modules Spacing & Breathing Room --- */
+
+#memory {
+  margin-left: 6px;
+  margin-right: 5px; 
+}
+
+#cpu {
+  margin-right: 5px; /* Increased gap right after CPU to break up the clutter */
+}
+
+#pulseaudio {
+  margin-right: 3px; /* Added breathing room for audio */
+}
+
+#battery {
+  margin-right: 12px; /* Added breathing room for battery */
+}
+
+#custom-network_speed {
+  padding-left: 5px;
+  padding-right: 2px;    
+  margin-left: 5px;
+  margin-right: 4px;    
+  letter-spacing: 0.5px; 
+}
+
+#network {
+  margin-right: 9px; /* Separation for network connection indicators */
+}
+
+#custom-bluetooth {
+  margin-right: 7px;
+}
+
+#custom-nightmode {
+  margin-right: 7px;
+}
+
+#custom-tuned {
+  padding-left: 4px;
+  padding-right: 5px;
+  margin-right: 9px; 
+  margin-left: 2px;
+}
+
+#custom-powermenu {
+  margin-right: 6px; /* Clean anchor padding at the very edge of the bar */
+}
+
+/* --- Tooltips / Popups styling --- */
+tooltip {
+  background: @background; /* A deep, rich surface tone for the container */
+  border: 1px solid @primary;     /* A clean, sharp border separating it from windows */
+  border-radius: 6px;
+}
+
+tooltip label {
+  color: @primary;          /* Crisp, high-contrast text pulled from your wallpaper */
+  padding: 6px 10px;
+}

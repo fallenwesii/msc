@@ -9,6 +9,7 @@ A comprehensive list of packages required for the **msc** environment.
 - **gtklock**: GTK-based lockscreen for Wayland.
 - **gammastep**: blue light filter.
 - **xdg-desktop-portal-wlr**: xdg-desktop-portal backend for wlroots.
+- **autotiling**: used for dynamic tiling like master layout in Hyprland 
 
 ### Interface & Shell
 - **waybar**: Highly customizable Wayland bar for Hyprland.

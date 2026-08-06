@@ -1,0 +1,344 @@
+#######################################
+## MSC - My Sway Configuration
+## Compositor : swayfx
+## WM         : SwayFX
+## Author     : Wesii
+##
+## GitHub:
+## https://github.com/fallenwesii/msc
+#######################################
+
+
+
+# SwayFX Unified Configuration
+# Read `man 5 sway` for a complete reference.
+
+
+#######################################
+##  ENV
+#######################################
+# Environment variables
+# set $XCURSOR_SIZE 24
+# set $XDG_CURRENT_DESKTOP sway
+
+# 1. Set env FIRST so portals know we're on sway
+set $XDG_CURRENT_DESKTOP sway
+set $XDG_PORTAL_BACKENDS wlr,gtk
+
+exec dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_PORTAL_BACKENDS SWAY_SOCKET
+exec systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_PORTAL_BACKENDS SWAY_SOCKET
+
+
+# 2. Only start the main portal. The backends will auto-spawn
+exec systemctl --user --no-block start xdg-desktop-portal
+
+exec systemctl --user import-environment
+
+#######################################
+##  PROGRAMS
+#######################################
+# Variables
+# Super(Logo key). Use Mod1 for Alt.
+set $mod Mod4
+# Home row direction keys, like vim
+#set $left h
+#set $down j
+#set $up k
+#set $right l
+
+# Your preferred terminal emulator
+set $term ghostty
+
+# Your preferred application launcher
+set $menu wofi --show drun
+
+# File manager and browser variables
+set $fileManager "nautilus --new-window"
+set $browser brave
+
+
+#######################################
+##  APPEARANCE
+#######################################
+# SwayFX settings
+blur enable
+# blur_xray enables wallpaper blurring without blurring windows below
+blur_xray disable
+blur_passes 5
+blur_radius 8
+# blur_noise <float value 0 - 1>
+#blur_brightness 1.1
+# blur_contrast <float value 0 - 2>
+# blur_saturation <float value 0 - 2>
+
+# Window corners can be rounded in SwayFX
+# corner_radius can be any number of pixels
+corner_radius 5
+
+# SwayFX also features window drop shadows, which, of course, can be enabled at any time
+shadows disable
+shadows_on_csd enable
+# You can also offset the shadow's position, make unfocused windows have different shadows, give shadows a nondefault color, and blur shadows
+# shadow_inactive_color #0000007F
+# shadow_offset <x offset> <y offset>
+# shadow_blur_radius <integer value 0 - 99>
+# shadow_color <hex color with alpha>
+
+# Dimming
+default_dim_inactive 0.22
+# for_window [CRITERIA_HERE] dim_inactive <float value 0.0 - 1.0>
+
+
+
+# Gaps and borders
+gaps inner 3
+gaps outer 0
+# corner radius needs gaps to be visible
+default_border pixel 2
+default_floating_border pixel 2
+
+
+
+
+#######################################
+##  LAYOUTS
+#######################################
+
+
+# Drag floating windows by holding down $mod and left mouse button.
+# Resize them with right mouse button + $mod.
+# Despite the name, also works for non-floating windows.
+# Change normal to inverse to use left mouse button for resizing and right
+# mouse button for dragging.
+floating_modifier $mod normal
+
+# Input configuration
+# You can also configure each device individually.
+# Read `man 5 sway-input` for more information about this section.
+input type:touchpad {
+    dwt enabled
+    tap enabled
+    natural_scroll enabled
+    middle_emulation enabled
+}
+
+
+
+
+#######################################
+##  MONITOR
+#######################################
+# Output configuration
+# Example configuration:
+#   output HDMI-A-1 resolution 1920x1080 position 1920,0
+#
+# You can get the names of your outputs by running: swaymsg -t get_outputs
+
+
+
+
+#######################################
+##  WINDOWRULES
+#######################################
+# Window rules and assignments
+# for_window [app_id="ghostty"] floating enable
+# for_window [class=".*"] dim_inactive 0.2
+
+for_window [app_id="wallpaper-picker"] floating enable
+for_window [app_id="wallpaper-picker"] border none
+for_window [app_id="wallpaper-picker"] resize set width 1300 px height 400 px
+for_window [app_id="wallpaper-picker"] move position center
+
+for_window [app_id="sway_help"] floating enable
+for_window [app_id="sway_help"] resize set width 900 px height 600 px
+for_window [app_id="sway_help"] move position center
+
+for_window [app_id="notifications"] floating enable
+for_window [app_id="notifications"] resize set width 900 px height 600 px
+for_window [app_id="notifications"] move position center
+
+
+
+#######################################
+##  WORKSPACES
+#######################################
+# Workspaces:
+bindsym $mod+1 workspace number 1
+bindsym $mod+2 workspace number 2
+bindsym $mod+3 workspace number 3
+bindsym $mod+4 workspace number 4
+bindsym $mod+5 workspace number 5
+bindsym $mod+6 workspace number 6
+bindsym $mod+7 workspace number 7
+bindsym $mod+8 workspace number 8
+bindsym $mod+9 workspace number 9
+bindsym $mod+0 workspace number 10
+
+bindsym $mod+Shift+1 move container to workspace number 1
+bindsym $mod+Shift+2 move container to workspace number 2
+bindsym $mod+Shift+3 move container to workspace number 3
+bindsym $mod+Shift+4 move container to workspace number 4
+bindsym $mod+Shift+5 move container to workspace number 5
+bindsym $mod+Shift+6 move container to workspace number 6
+bindsym $mod+Shift+7 move container to workspace number 7
+bindsym $mod+Shift+8 move container to workspace number 8
+bindsym $mod+Shift+9 move container to workspace number 9
+bindsym $mod+Shift+0 move container to workspace number 10
+
+# Scroll through existing workspaces with mainMod + scroll
+bindsym $mod+button4 workspace prev
+bindsym $mod+button5 workspace next
+
+
+
+
+#######################################
+##  STARTUP
+#######################################
+# Startup applications
+
+exec_always autotiling --limit 2
+exec /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
+exec wl-paste --type text --watch cliphist store
+exec wl-paste --type image --watch cliphist store
+exec wl-paste --type text --watch cliphist -max-items 100 store
+exec wl-paste --type image --watch cliphist -max-items 100 store
+exec  qs -d
+exec awww-daemon
+
+
+
+
+# Idle configuration
+# Example configuration:
+exec swayidle -w \
+         timeout 300 'swaymsg exec gtklock' \
+         timeout 600 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' \
+         before-sleep 'swaymsg exec gtklock'
+#
+# This will lock your screen after 300 seconds of inactivity, then turn off
+# your displays after another 300 seconds, and turn your screens back on when
+# resumed. It will also lock your screen before your computer goes to sleep.
+
+ exec waybar
+ exec dunst
+
+
+#######################################
+##  KEYBINDINGS
+#######################################
+# Basics:
+bindsym $mod+Return exec $term
+bindsym $mod+q kill
+bindsym $mod+Space exec $menu
+bindsym $mod+r exec $menu
+bindsym $mod+Ctrl+r exec sh -c 'swaymsg reload && notify-send "Sway" "Configuration reloaded"'
+bindsym $mod+Shift+e exec swaynag -t warning -m 'Do you really want to exit SwayFX?' -B 'Yes, exit SwayFX' 'swaymsg exit'
+
+# Config editing and reloading (mimicking hyprland)
+bindsym $mod+Ctrl+c exec ghostty -e bash -c "cd ~/.config/sway/ && nvim ~/.config/sway/config"
+
+# Wallpaper picker
+bindsym $mod+Ctrl+w exec kitty --class wallpaper-picker -e ~/.config/sway/scripts/wallpaper-switcher.sh
+
+# Clipboard manager
+bindsym $mod+c exec ~/.config/sway/scripts/clipboard.sh
+
+# Apps & Utilities
+bindsym $mod+e exec $fileManager
+bindsym $mod+Alt+e exec ghostty --class=yazi -e yazi
+bindsym $mod+m exec ghostty --class=btop -e btop
+bindsym $mod+Shift+m exit
+bindsym $mod+b exec $browser
+bindsym $mod+Alt+w exec brave --app=https://web.whatsapp.com
+bindsym $mod+Alt+g exec brave --app=https://gemini.google.com
+bindsym $mod+i exec subl --launch-or-new-window
+
+# Floating & Layouts
+bindsym $mod+v floating toggle
+bindsym $mod+Ctrl+Space focus mode_toggle
+bindsym $mod+p layout toggle split # Mimics hyprland pseudo
+bindsym $mod+t layout toggle split # Mimics hyprland togglesplit
+bindsym $mod+f fullscreen
+bindsym $mod+a focus parent
+bindsym $mod+Ctrl+h splith
+bindsym $mod+Ctrl+v splitv 
+bindsym $mod+Ctrl+s layout stacking
+bindsym $mod+Shift+t layout tabbed 
+bindsym $mod+Ctrl+e layout toggle split
+
+# Lock & Logout
+bindsym $mod+l exec gtklock
+bindsym $mod+Shift+q exec wlogout -p layer-shell
+
+# UI Toggles & Scripts
+bindsym $mod+Shift+b exec ~/.config/sway/scripts/toggle-waybar.sh
+bindsym $mod+period exec wofi-emoji
+bindsym $mod+Ctrl+g exec ~/.config/sway/scripts/toggle-grayscale.sh
+bindsym $mod+o exec ~/.config/sway/scripts/centered-floating-window.sh
+bindsym $mod+Shift+Ctrl+b exec ~/.config/sway/scripts/toggle-compact.sh
+bindsym $mod+h exec kitty --class sway_help -e ~/.config/sway/scripts/help.sh
+bindsym $mod+n exec kitty --class notifications -e ~/.config/sway/scripts/notifications.sh
+bindsym $mod+s exec kitty --class quick-settings -e ~/.local/bin/minimal6
+
+# Moving around:
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+
+
+
+# Scratchpad:
+bindsym $mod+Shift+minus move scratchpad
+bindsym $mod+minus scratchpad show
+
+# Screenshots:
+# Print Screen: Interactive screenshot (select a region) and save to Pictures
+bindsym Print exec grim -g "$(slurp)" ~/Pictures/Screenshots/$(date +'%Y-%m-%d_%H-%M-%S').png && dunstify "Screenshot" "Screenshot saved!" -a "grim" -t 3000
+# Super + Shift + S: Interactive screenshot straight to Clipboard (no saving)
+bindsym $mod+Shift+s exec grim -g "$(slurp)" - | wl-copy
+# Super + S: Capture full screen and save to Pictures
+bindsym $mod+Alt+s exec grim ~/Pictures/Screenshots/$(date +'%Y-%m-%d_%H-%M-%S').png && dunstify "Screenshot" "Screenshot saved!" -a "grim" -t 3000
+
+# Utilities (Media / Volume / Brightness):
+bindsym --locked XF86AudioMute exec wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+bindsym --locked XF86AudioLowerVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+bindsym --locked XF86AudioRaiseVolume exec wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+
+bindsym --locked XF86AudioMicMute exec wpctl set-mute @DEFAULT_SOURCE@ toggle
+bindsym --locked XF86MonBrightnessDown exec ~/.config/sway/scripts/brightness.sh down
+bindsym --locked XF86MonBrightnessUp exec ~/.config/sway/scripts/brightness.sh up
+bindsym --locked XF86AudioPlay exec playerctl play-pause
+bindsym --locked XF86AudioPause exec playerctl play-pause
+bindsym --locked XF86AudioPrev exec playerctl previous
+bindsym --locked XF86AudioNext exec playerctl next
+bindsym --locked XF86AudioStop exec playerctl stop
+
+# Zoom (Sway doesn't support cursor zoom natively like Hyprland, mapping to output scale instead)
+# bindsym $mod+z exec swaymsg output * scale 1.4
+# bindsym $mod+Shift+z exec swaymsg output * scale 1.0
+
+# Resizing containers:
+mode "resize" {
+    # Ditto, with arrow keys
+    bindsym Left resize shrink width 10px
+    bindsym Down resize grow height 10px
+    bindsym Up resize shrink height 10px
+    bindsym Right resize grow width 10px
+    # Return to default mode
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+bindsym $mod+Alt+r mode "resize"
+
+
+bindsym $mod+Tab workspace next
+bindsym $mod+Shift+Tab workspace prev
+bindgesture swipe:3:left workspace next
+bindgesture swipe:3:right workspace prev
+bindgesture swipe:3:up exec $menu
+
+
+
+include colors.conf
+exec /usr/libexec/xdg-desktop-portal-gtk

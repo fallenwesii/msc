@@ -1,0 +1,49 @@
+@import "/home/wesii/.config/wofi/colors.css";
+
+window {
+    background: alpha(@background, 0.89);
+}
+* {
+  font-family: "Jetbrains Mono";
+  color: @primary;
+}
+
+#scroll {
+  padding: 0.5rem;
+}
+
+#input {
+  /* Slightly lighter container color for the input field */
+  background-color: @background;
+  outline: none;
+  box-shadow: none;
+  border: 0;
+  border-radius: 0;
+  font-size: 1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+#inner-box {
+  margin: 0.5rem;
+  font-size: 1rem;
+}
+
+#img {
+  margin: 10px 10px;
+}
+
+#entry {
+  border-radius: 0.5rem;
+}
+
+#entry:selected, #selected {
+  background-color: @primary_container;
+  outline: none;
+}
+
+#entry:selected #text, #selected #text {
+  color: @on_primary_container;
+}

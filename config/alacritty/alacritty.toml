@@ -1,0 +1,37 @@
+[general]
+import = [
+    "~/.config/alacritty/colors.toml"
+]   
+
+[window.padding]
+  x = 6
+  y = 6
+
+[font]
+  size = 16
+
+[font.normal]
+  family = "JetBrains Mono Nerd Font"
+  style = "Regular"
+
+[font.bold]
+  family = "JetBrains Mono Nerd Font"
+  style = "Bold"
+
+[font.italic]
+  family = "JetBrains Mono Nerd Font"
+  style = "Italic"
+
+[font.bold_italic]
+  family = "JetBrains Mono Nerd Font"
+  style = "Bold Italic"
+
+
+
+[window]
+opacity = 0.5   
+
+[mouse]
+bindings = [
+  { mouse = "Right", action = "Copy" },
+]   

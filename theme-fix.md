@@ -23,7 +23,7 @@ Examples: Kvantum apps, Dolphin
    - VS Code Marketplace or [Open VSX](https://open-vsx.org/) for VSCodium
 2. `Ctrl+Shift+P` -> `Color Theme` -> select `Matugen`
 3. Settings -> search `matugen` -> enable `Matugen Theme: Auto Update`  
-   This will apply new colors automatically when you change wallpaper with m6
+   This will apply new colors automatically when you change wallpaper
 
 ### **Other apps**
 Any app that supports theming: look for a `matugen` theme option in its settings. 

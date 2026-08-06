@@ -1,0 +1,20 @@
+@import "colors.css";
+
+* {
+box-shadow: none;
+}
+
+window {
+  background-color: @background;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+#playerctl-revealer > box {
+background-color: @primary_container;
+color: @on_primary_container;
+border-radius: 4px;
+padding: 1em;
+margin-bottom: 4em;
+}
