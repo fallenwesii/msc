@@ -27,20 +27,21 @@ show_header
 
 # --- Package Lists ---
 PACMAN_PKGS=(
-  "hyprland" "hypridle" "hyprlock" "hyprsunset" "gammastep"
-  "xdg-desktop-portal-hyprland" "waybar" "dunst" "wofi" "nwg-look"
+  "swayidle" "gtklock" "gammastep"
+  "xdg-desktop-portal-wlr" "waybar" "dunst" "wofi" "nwg-look"
   "fzf" "gum" "figlet" "grim" "slurp" "wl-clipboard" "cliphist"
   "brightnessctl" "pavucontrol" "polkit-gnome" "gvfs" "tuned" "jq"
   "xdg-utils" "git" "libnotify" "psmisc" "procps-ng" "iproute2"
   "pipewire" "wireplumber" "blueman" "bluez" "bluez-utils"
   "kitty" "alacritty" "nautilus" "yazi" "btop"
   "ttf-jetbrains-mono-nerd" "noto-fonts" "qt5-wayland" "qt5ct" "qt6ct"
-  "networkmanager" "base-devel" "xorg-xhost" "quickshell"
+  "networkmanager" "network-manager-applet" "base-devel" "xorg-xhost" "quickshell"
   "neovim" "kvantum" "ghostty" "awww"
-  "python3" "python-pyfiglet" "matugen"
+  "python3" "python-pyfiglet" "matugen" "autotiling"
 )
 
 AUR_PKGS=(
+  "swayfx"
   "wlogout" "wofi-emoji" "brave-bin" "nm-connection-editor"
   "bibata-cursor-theme"
 )
@@ -64,6 +65,7 @@ install_if_missing() {
 }
 
 # Essential build tools for starting
+# We need base-devel and git first
 for tool in base-devel git; do
   install_if_missing "$tool"
 done
@@ -151,13 +153,24 @@ confirm_and_link() {
   local target=$2
   local name=$3
 
-  if [[ -e "$target" ]]; then
+  if [[ -e "$target" || -L "$target" ]]; then
     echo -e "${YELLOW}An existing configuration for $name was found.${NC}"
     read -p "Do you want to replace it? (y/n): " choice
     if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
-      echo "Backing up existing $name..."
-      mv "$target" "${target}.bak_$(date +%Y%m%d_%H%M%S)"
-      ln -sf "$source" "$target"
+      local link_dest
+      link_dest=$(readlink -f "$target" 2>/dev/null || true)
+      local real_source
+      real_source=$(readlink -f "$source" 2>/dev/null || true)
+
+      if [[ -L "$target" && ("$link_dest" == "$real_source" || "$link_dest" == "$DOTFILES_DIR"*) ]]; then
+        echo "Updating symlink for $name (points to dotfiles)..."
+        rm -rf "$target"
+        ln -sf "$source" "$target"
+      else
+        echo "Backing up existing $name..."
+        mv "$target" "${target}.bak_$(date +%Y%m%d_%H%M%S)"
+        ln -sf "$source" "$target"
+      fi
       echo -e "${GREEN}Linked $name${NC}"
     else
       echo "Skipping $name"
@@ -165,6 +178,28 @@ confirm_and_link() {
   else
     ln -sf "$source" "$target"
     echo -e "${GREEN}Linked $name${NC}"
+  fi
+}
+
+confirm_and_copy() {
+  local source=$1
+  local target=$2
+  local name=$3
+
+  if [[ -e "$target" || -L "$target" ]]; then
+    echo -e "${YELLOW}An existing file/directory for $name was found.${NC}"
+    read -p "Do you want to replace it? (y/n): " choice
+    if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
+      echo "Backing up existing $name..."
+      mv "$target" "${target}.bak_$(date +%Y%m%d_%H%M%S)"
+      cp -r "$source" "$target"
+      echo -e "${GREEN}Copied $name${NC}"
+    else
+      echo "Skipping $name"
+    fi
+  else
+    cp -r "$source" "$target"
+    echo -e "${GREEN}Copied $name${NC}"
   fi
 }
 
@@ -177,7 +212,9 @@ done
 # Handle special files/dirs
 confirm_and_link "$DOTFILES_DIR/.themes" "$HOME/.themes" ".themes"
 confirm_and_link "$DOTFILES_DIR/.icons" "$HOME/.icons" ".icons"
-confirm_and_link "$DOTFILES_DIR/.bashrc" "$HOME/.bashrc" ".bashrc"
+
+# .bashrc does not work with symlinks: copy instead
+confirm_and_copy "$DOTFILES_DIR/.bashrc" "$HOME/.bashrc" ".bashrc"
 
 # Kvantum themes
 if command -v kvantummanager &>/dev/null; then
@@ -187,7 +224,7 @@ fi
 # --- 7. Paths and Assets ---
 echo -e "${YELLOW}Setting up scripts and wallpapers...${NC}"
 
-# net-speed.sh
+# net-speed.sh does not work with symlinks: copy instead
 if [ -f "$HOME/.local/bin/net-speed.sh" ]; then
   read -p "Overwrite existing ~/.local/bin/net-speed.sh? (y/n): " choice
   if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
@@ -203,92 +240,77 @@ else
   echo -e "${GREEN}Installed net-speed.sh${NC}"
 fi
 
-# minimal6 python script
-if [ -f "$HOME/.local/bin/minimal6" ]; then
-  read -p "Overwrite existing ~/.local/bin/minimal6? (y/n): " choice
-  if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
-    cp "$DOTFILES_DIR/minimal6" "$HOME/.local/bin/"
-    chmod +x "$HOME/.local/bin/minimal6"
-    echo -e "${GREEN}Updated minimal6${NC}"
-  else
-    echo "Skipping minimal6"
-  fi
-else
-  cp "$DOTFILES_DIR/minimal6" "$HOME/.local/bin/"
-  chmod +x "$HOME/.local/bin/minimal6"
-  echo -e "${GREEN}Installed minimal6${NC}"
-fi
-
 # --- 8. Resolve Hardcoded Paths ---
-# Some config files were originally copied from the author's system and contain
-# hardcoded paths (e.g. /home/wesii). This section fixes them for the current user.
+# Fix hardcoded paths for the current user in configs
 echo -e "${YELLOW}Resolving hardcoded paths for your system...${NC}"
 
-# Helper: in-place sed that works on both GNU and BSD
 sed_inplace() {
   sed -i "$1" "$2"
 }
 
-# -- gtk-3.0/bookmarks: contains __HOME__ placeholder --
+# -- gtk-3.0/bookmarks --
 BOOKMARKS="$CONF_DIR/gtk-3.0/bookmarks"
-if [ -f "$BOOKMARKS" ]; then
-  sed_inplace "s|__HOME__|$HOME|g" "$BOOKMARKS"
+if [ -f "$BOOKMARKS" ] || [ -L "$BOOKMARKS" ]; then
+  REAL_BOOKMARKS=$(realpath "$BOOKMARKS" 2>/dev/null || echo "$BOOKMARKS")
+  sed_inplace "s|__HOME__|$HOME|g" "$REAL_BOOKMARKS"
+  sed_inplace "s|/home/[a-zA-Z0-9_-]*|$HOME|g" "$REAL_BOOKMARKS"
   echo -e "${GREEN}Fixed paths in gtk-3.0/bookmarks${NC}"
-elif [ -L "$BOOKMARKS" ]; then
-  # It's a symlink: operate on the real file in dotfiles dir
-  sed_inplace "s|__HOME__|$HOME|g" "$DOTFILES_DIR/config/gtk-3.0/bookmarks"
-  echo -e "${GREEN}Fixed paths in gtk-3.0/bookmarks (via dotfiles symlink)${NC}"
 fi
 
-# -- quickshell/shell.qml: __HOME__ placeholder for matugenColorsPath --
+# -- quickshell/shell.qml --
 SHELL_QML="$CONF_DIR/quickshell/shell.qml"
-if [ -f "$SHELL_QML" ]; then
-  sed_inplace "s|__HOME__|$HOME|g" "$SHELL_QML"
+if [ -f "$SHELL_QML" ] || [ -L "$SHELL_QML" ]; then
+  REAL_SHELL=$(realpath "$SHELL_QML" 2>/dev/null || echo "$SHELL_QML")
+  sed_inplace "s|__HOME__|$HOME|g" "$REAL_SHELL"
+  sed_inplace "s|/home/[a-zA-Z0-9_-]*/.config/quickshell|$HOME/.config/quickshell|g" "$REAL_SHELL"
   echo -e "${GREEN}Fixed paths in quickshell/shell.qml${NC}"
-elif [ -L "$SHELL_QML" ]; then
-  sed_inplace "s|__HOME__|$HOME|g" "$DOTFILES_DIR/config/quickshell/shell.qml"
-  echo -e "${GREEN}Fixed paths in quickshell/shell.qml (via dotfiles symlink)${NC}"
 fi
 
-# -- hypr/colors.conf: $image path (matugen writes this, but seed it correctly) --
-COLORS_CONF="$CONF_DIR/hypr/colors.conf"
-if [ -f "$COLORS_CONF" ] || [ -L "$COLORS_CONF" ]; then
-  # Resolve the real file (follow symlink to dotfiles)
-  REAL_COLORS=$(realpath "$COLORS_CONF" 2>/dev/null || echo "$COLORS_CONF")
-  sed_inplace "s|~/Pictures|$HOME/Pictures|g" "$REAL_COLORS"
-  echo -e "${GREEN}Fixed \$image path in hypr/colors.conf${NC}"
+# -- gtklock colors and config --
+GTKLOCK_COLORS="$CONF_DIR/gtklock/colors.css"
+if [ -f "$GTKLOCK_COLORS" ] || [ -L "$GTKLOCK_COLORS" ]; then
+  REAL_GL_COLORS=$(realpath "$GTKLOCK_COLORS" 2>/dev/null || echo "$GTKLOCK_COLORS")
+  sed_inplace "s|/home/[a-zA-Z0-9_-]*/Pictures/wallpapers|$HOME/Pictures/wallpapers|g" "$REAL_GL_COLORS"
+  echo -e "${GREEN}Fixed wallpaper path in gtklock/colors.css${NC}"
 fi
 
-# -- hypr/conf/startup.conf: awww wallpaper path --
-STARTUP_CONF="$CONF_DIR/hypr/conf/startup.conf"
-if [ -f "$STARTUP_CONF" ] || [ -L "$STARTUP_CONF" ]; then
-  REAL_STARTUP=$(realpath "$STARTUP_CONF" 2>/dev/null || echo "$STARTUP_CONF")
-  # $HOME is already used there (shell expands it), no sed needed
-  # But if it still has a hardcoded path, replace it
-  sed_inplace "s|/home/[a-zA-Z0-9_-]*/Pictures|$HOME/Pictures|g" "$REAL_STARTUP"
+GTKLOCK_CONF="$CONF_DIR/gtklock/config.ini"
+if [ -f "$GTKLOCK_CONF" ] || [ -L "$GTKLOCK_CONF" ]; then
+  REAL_GL_CONF=$(realpath "$GTKLOCK_CONF" 2>/dev/null || echo "$GTKLOCK_CONF")
+  sed_inplace "s|/home/[a-zA-Z0-9_-]*/.config/gtklock|$HOME/.config/gtklock|g" "$REAL_GL_CONF"
+  echo -e "${GREEN}Fixed style path in gtklock/config.ini${NC}"
 fi
 
-# -- GTK symlinks: recreate the gtk-4.0 and gtk-3.0 symlinks that pointed --
-# -- to /home/wesii/.themes/... so they point to the current user's ~/.themes --
+# -- sway/palette.conf --
+SWAY_PALETTE="$CONF_DIR/sway/palette.conf"
+if [ -f "$SWAY_PALETTE" ] || [ -L "$SWAY_PALETTE" ]; then
+  REAL_PALETTE=$(realpath "$SWAY_PALETTE" 2>/dev/null || echo "$SWAY_PALETTE")
+  sed_inplace "s|/home/[a-zA-Z0-9_-]*/Pictures/wallpapers|$HOME/Pictures/wallpapers|g" "$REAL_PALETTE"
+  echo -e "${GREEN}Fixed \$image path in sway/palette.conf${NC}"
+fi
+
+# -- wofi/style.css --
+WOI_CSS="$CONF_DIR/wofi/style.css"
+ABS_PATH="$HOME/.config/wofi/colors.css"
+if [ -f "$WOI_CSS" ] || [ -L "$WOI_CSS" ]; then
+  REAL_WOI=$(realpath "$WOI_CSS" 2>/dev/null || echo "$WOI_CSS")
+  sed_inplace "s|/home/[a-zA-Z0-9_-]*/.config/wofi/colors.css|$ABS_PATH|g" "$REAL_WOI"
+  echo -e "${GREEN}Fixed @import path in wofi/style.css to $ABS_PATH${NC}"
+fi
+
+# -- GTK symlinks: Recreate gtk-4.0 and gtk-3.0 symlinks --
 echo -e "${YELLOW}Recreating GTK theme symlinks...${NC}"
 ADW_GTK4="$HOME/.themes/adw-gtk3-dark/gtk-4.0"
 ADW_GTK3="$HOME/.themes/adw-gtk3-dark/gtk-3.0"
 GTK4_CONF="$CONF_DIR/gtk-4.0"
 GTK3_CONF="$CONF_DIR/gtk-3.0"
 
-# Only proceed if the .themes dir actually landed in $HOME (via symlink or copy)
 if [ -d "$HOME/.themes/adw-gtk3-dark" ]; then
-  # gtk-4.0 files that should be symlinked from ~/.config/gtk-4.0/ into the theme
-  for gtkfile in gtk.css gtk-dark.css libadwaita.css libadwaita-tweaks.css matugen-override.css colors.css assets; do
-    TARGET_LINK="$GTK4_CONF/$gtkfile"
-    THEME_SRC="$ADW_GTK4/$gtkfile"
-    if [ -e "$THEME_SRC" ]; then
-      # Remove old (possibly broken) symlink or file, then recreate
-      rm -f "$TARGET_LINK"
-      ln -sf "$THEME_SRC" "$TARGET_LINK"
-      echo -e "  ${GREEN}Linked gtk-4.0/$gtkfile${NC}"
-    fi
-  done
+  # Symlink ~/.themes/adw-gtk3-dark/gtk-4.0 to ~/.config/gtk-4.0
+  rm -rf "$GTK4_CONF"
+  ln -sf "$ADW_GTK4" "$GTK4_CONF"
+  echo -e "  ${GREEN}Linked gtk-4.0 directory${NC}"
+
   # gtk-3.0/colors.css symlink
   GTK3_COLORS="$GTK3_CONF/colors.css"
   THEME_GTK3_COLORS="$ADW_GTK3/colors.css"
@@ -303,26 +325,13 @@ fi
 
 echo -e "${GREEN}Hardcoded path resolution complete.${NC}"
 
-# -- wofi/style.css: @import needs absolute path from root --
-WOI_CSS="$CONF_DIR/wofi/style.css"
-ABS_PATH="$HOME/.config/wofi/colors.css"
-
-if [ -f "$WOI_CSS" ]; then
-  sed_inplace "s|@import \"colors.css\";|@import \"$ABS_PATH\";|g" "$WOI_CSS"
-  echo -e "${GREEN}Fixed @import path in wofi/style.css to $ABS_PATH${NC}"
-elif [ -L "$WOI_CSS" ]; then
-  # It's a symlink: operate on the real file in dotfiles dir
-  sed_inplace "s|@import \"colors.css\";|@import \"$ABS_PATH\";|g" "$DOTFILES_DIR/config/wofi/style.css"
-  echo -e "${GREEN}Fixed @import path in wofi/style.css (via dotfiles symlink)${NC}"
-fi
-
 # --- 9. Wallpapers ---
 echo -e "${YELLOW}Setting up wallpapers...${NC}"
 WALLPAPERS_DEST="$HOME/Pictures/wallpapers"
 
 if [ -d "$WALLPAPERS_DEST" ]; then
   echo -e "${YELLOW}A wallpapers directory already exists at $WALLPAPERS_DEST.${NC}"
-  echo -e "${YELLOW}To avoid overwriting your existing wallpapers, this setup will NOT touch it.${NC}"
+  echo -e "${YELLOW}This setup will NOT overwriting your existing wallpapers .${NC}"
   echo ""
   read -p "Would you like to back it up first before adding new wallpapers? (y/n): " backup_choice
   if [[ "$backup_choice" == "y" || "$backup_choice" == "Y" ]]; then
@@ -348,12 +357,16 @@ else
 fi
 
 # --- 10. Final Verification ---
-echo -e "${YELLOW}Verifying important Hyprland packages...${NC}"
-HYPR_PKGS=("hyprland" "hypridle" "hyprlock" "waybar")
-for pkg in "${HYPR_PKGS[@]}"; do
-  if ! check_package "$pkg"; then
+echo -e "${YELLOW}Verifying important Sway packages...${NC}"
+SWAY_PKGS=("swayfx" "swayidle" "gtklock" "waybar")
+for pkg in "${SWAY_PKGS[@]}"; do
+  if ! check_package "$pkg" && ! yay -Qi "$pkg" &>/dev/null; then
     echo -e "${RED}$pkg is missing! Attempting to install...${NC}"
-    sudo pacman -S --noconfirm "$pkg"
+    if [[ "$pkg" == "swayfx" ]]; then
+      yay -S --noconfirm "$pkg"
+    else
+      sudo pacman -S --noconfirm "$pkg"
+    fi
   fi
 done
 
@@ -364,17 +377,19 @@ if [[ "$setup_themes" == "y" || "$setup_themes" == "Y" ]]; then
 
   # Flatpak theming
   if command -v flatpak &>/dev/null; then
-    echo -e "${YELLOW}Allowing Flatpak apps to access themes and icons...${NC}"
+    echo -e "${YELLOW}Allowing Flatpak apps to access themes, icons, and GTK 4.0 configuration...${NC}"
     flatpak override --user --filesystem="$HOME"/.themes
     flatpak override --user --filesystem="$HOME"/.icons
-    echo -e "${GREEN}Flatpak apps can now access themes and icons.${NC}"
+    flatpak override --user --filesystem="$HOME"/.config/gtk-4.0
+    echo -e "${GREEN}Flatpak apps can now access themes, icons, and GTK 4.0 configuration.${NC}"
   fi
 
-  # Set adw-gtk3 theme via gsettings
-  echo -e "${BLUE}Applying adw-gtk3-dark theme via gsettings...${NC}"
+  # Set adw-gtk3 theme and icons via gsettings
+  echo -e "${BLUE}Applying adw-gtk3-dark theme and FairyWren_adwaita_Dark icons via gsettings...${NC}"
   gsettings set org.gnome.desktop.interface gtk-theme "adw-gtk3-dark"
+  gsettings set org.gnome.desktop.interface icon-theme "FairyWren_adwaita_Dark"
   gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
-  echo -e "${GREEN}adw-gtk3-dark theme applied.${NC}"
+  echo -e "${GREEN}adw-gtk3-dark theme and FairyWren_adwaita_Dark icons applied.${NC}"
 
   # Run matugen for dynamic coloring
   MATUGEN_WALLPAPER="$HOME/Pictures/wallpapers/building.png"
@@ -391,14 +406,8 @@ if [[ "$setup_themes" == "y" || "$setup_themes" == "Y" ]]; then
     GTK3_CONF="$CONF_DIR/gtk-3.0"
     mkdir -p "$GTK4_CONF" "$GTK3_CONF"
     if [ -d "$HOME/.themes/adw-gtk3-dark" ]; then
-      for gtkfile in gtk.css gtk-dark.css libadwaita.css libadwaita-tweaks.css matugen-override.css colors.css assets; do
-        TARGET_LINK="$GTK4_CONF/$gtkfile"
-        THEME_SRC="$ADW_GTK4/$gtkfile"
-        if [ -e "$THEME_SRC" ]; then
-          rm -f "$TARGET_LINK"
-          ln -sf "$THEME_SRC" "$TARGET_LINK"
-        fi
-      done
+      rm -rf "$GTK4_CONF"
+      ln -sf "$ADW_GTK4" "$GTK4_CONF"
       if [ -e "$ADW_GTK3/colors.css" ]; then
         rm -f "$GTK3_CONF/colors.css"
         ln -sf "$ADW_GTK3/colors.css" "$GTK3_CONF/colors.css"
@@ -408,13 +417,28 @@ if [[ "$setup_themes" == "y" || "$setup_themes" == "Y" ]]; then
   else
     echo -e "${YELLOW}Warning: $MATUGEN_WALLPAPER not found.${NC}"
     echo -e "${YELLOW}You can run matugen manually with: matugen -m dark image <path-to-wallpaper> --source-color-index 0${NC}"
+    sleep 8
   fi
 
 else
   echo -e "${BLUE}Skipping theme setup.${NC}"
 fi
 
-# --- 12. Final Message ---
+# --- 12. QT/Kvantum Environment configuration ---
+echo -e "${YELLOW}Setting up QT/Kvantum environment...${NC}"
+mkdir -p "$HOME/.config/environment.d"
+QT_CONF="$HOME/.config/environment.d/10-qt.conf"
+if [ -f "$QT_CONF" ]; then
+  # Remove existing wayland/qt6ct lines if any to avoid duplication
+  sed -i '/QT_QPA_PLATFORM=/d' "$QT_CONF"
+  sed -i '/QT_QPA_PLATFORMTHEME=/d' "$QT_CONF"
+fi
+echo "QT_QPA_PLATFORM=wayland" >>"$QT_CONF"
+echo "QT_QPA_PLATFORMTHEME=qt6ct" >>"$QT_CONF"
+systemctl --user daemon-reload
+echo -e "${GREEN}QT/Kvantum environment configured and systemd user manager reloaded.\nA reboot is recommended for Qt/Kvantum theming${NC}"
+
+# --- 13. Final Message ---
 clear
 show_header
 if command -v gum &>/dev/null; then
