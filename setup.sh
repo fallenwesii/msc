@@ -28,7 +28,7 @@ show_header
 # --- Package Lists ---
 PACMAN_PKGS=(
   "swayidle" "gtklock" "gammastep"
-  "xdg-desktop-portal-wlr" "waybar" "dunst" "wofi" "nwg-look"
+  "xdg-desktop-portal-wlr" "xdg-desktop-portal-gtk" "waybar" "swaync" "wofi" "nwg-look"
   "fzf" "gum" "figlet" "grim" "slurp" "wl-clipboard" "cliphist"
   "brightnessctl" "pavucontrol" "polkit-gnome" "gvfs" "tuned" "jq"
   "xdg-utils" "git" "libnotify" "psmisc" "procps-ng" "iproute2"
@@ -38,6 +38,7 @@ PACMAN_PKGS=(
   "networkmanager" "network-manager-applet" "base-devel" "xorg-xhost" "quickshell"
   "neovim" "kvantum" "ghostty" "awww"
   "python3" "python-pyfiglet" "matugen" "autotiling"
+  "gsimplecal" "gamemode"
 )
 
 AUR_PKGS=(
@@ -148,33 +149,34 @@ DOTFILES_DIR=$(pwd)
 CONF_DIR="$HOME/.config"
 mkdir -p "$HOME/.local/bin"
 
+# Detect whether a target already belongs to the msc dotfiles repo
+# (i.e. resolves inside $DOTFILES_DIR). Only this repo is treated as
+# dotfiles-managed; anything else is a foreign config and gets backed up.
+is_dotfiles_dir() {
+  local dir=$1
+  [[ "$(readlink -f "$dir" 2>/dev/null)" == "$DOTFILES_DIR"* ]]
+}
+
+is_dotfiles_link() {
+  is_dotfiles_dir "$1"
+}
+
 confirm_and_link() {
   local source=$1
   local target=$2
   local name=$3
 
   if [[ -e "$target" || -L "$target" ]]; then
-    echo -e "${YELLOW}An existing configuration for $name was found.${NC}"
-    read -p "Do you want to replace it? (y/n): " choice
-    if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
-      local link_dest
-      link_dest=$(readlink -f "$target" 2>/dev/null || true)
-      local real_source
-      real_source=$(readlink -f "$source" 2>/dev/null || true)
-
-      if [[ -L "$target" && ("$link_dest" == "$real_source" || "$link_dest" == "$DOTFILES_DIR"*) ]]; then
-        echo "Updating symlink for $name (points to dotfiles)..."
-        rm -rf "$target"
-        ln -sf "$source" "$target"
-      else
-        echo "Backing up existing $name..."
-        mv "$target" "${target}.bak_$(date +%Y%m%d_%H%M%S)"
-        ln -sf "$source" "$target"
-      fi
-      echo -e "${GREEN}Linked $name${NC}"
+    if is_dotfiles_link "$target"; then
+      # Already points into $DOTFILES_DIR: it's ours, just remove and relink.
+      echo -e "${YELLOW}Removing existing $name (points to dotfiles)...${NC}"
+      rm -rf "$target"
     else
-      echo "Skipping $name"
+      echo -e "${YELLOW}Backing up existing $name...${NC}"
+      mv "$target" "${target}.bak_$(date +%Y%m%d_%H%M%S)"
     fi
+    ln -sf "$source" "$target"
+    echo -e "${GREEN}Linked $name${NC}"
   else
     ln -sf "$source" "$target"
     echo -e "${GREEN}Linked $name${NC}"
@@ -209,9 +211,20 @@ for dir in "$DOTFILES_DIR/config"/*; do
   confirm_and_link "$dir" "$CONF_DIR/$dir_name" "$dir_name"
 done
 
+# Clean up stale *.bak_* symlinks that were produced by previous buggy runs.
+# These are useless: they are just symlinks back into a msc repo, not
+# real backups. Remove them so they stop accumulating.
+echo -e "${YELLOW}Removing stale dotfiles backup symlinks...${NC}"
+for bak in "$CONF_DIR"/*.bak_*; do
+  [ -L "$bak" ] || continue
+  if is_dotfiles_link "$bak"; then
+    rm -f "$bak"
+    echo -e "  ${BLUE}Removed $bak${NC}"
+  fi
+done
+
 # Handle special files/dirs
 confirm_and_link "$DOTFILES_DIR/.themes" "$HOME/.themes" ".themes"
-confirm_and_link "$DOTFILES_DIR/.icons" "$HOME/.icons" ".icons"
 
 # .bashrc does not work with symlinks: copy instead
 confirm_and_copy "$DOTFILES_DIR/.bashrc" "$HOME/.bashrc" ".bashrc"
@@ -424,7 +437,76 @@ else
   echo -e "${BLUE}Skipping theme setup.${NC}"
 fi
 
-# --- 12. QT/Kvantum Environment configuration ---
+# --- 12. Icon Theme Setup (FairyWren) ---
+echo -e "${YELLOW}Setting up icon theme...${NC}"
+ICON_THEME_NAME="FairyWren_adwaita_Dark"
+ICON_DEST="$HOME/.icons/$ICON_THEME_NAME"
+
+if [ -d "$ICON_DEST" ]; then
+  echo -e "${GREEN}Icon theme ($ICON_THEME_NAME) is already available at ~/.icons/${NC}"
+else
+  mkdir -p "$HOME/.icons"
+  TMP_ICON_TAR="/tmp/icons.tar.xz"
+  LOCAL_ASSET="$DOTFILES_DIR/assets/icons.tar.xz"
+  RELEASE_URL="https://github.com/fallenwesii/minimal6/releases/latest/download/icons.tar.xz"
+
+  DOWNLOAD_SUCCESS=false
+  if [ -f "$LOCAL_ASSET" ]; then
+    echo -e "${BLUE}Extracting icons from local asset...${NC}"
+    cp "$LOCAL_ASSET" "$TMP_ICON_TAR"
+    DOWNLOAD_SUCCESS=true
+  else
+    echo -e "${YELLOW}Downloading icons (attempting up to 3 times)...${NC}"
+    for attempt in {1..3}; do
+      echo -e "${BLUE}Attempt $attempt/3: Downloading icon theme...${NC}"
+      rm -f "$TMP_ICON_TAR"
+      if curl -sSL --connect-timeout 10 "$RELEASE_URL" -o "$TMP_ICON_TAR" && [ -s "$TMP_ICON_TAR" ]; then
+        if tar -tf "$TMP_ICON_TAR" &>/dev/null; then
+          DOWNLOAD_SUCCESS=true
+          break
+        fi
+      fi
+      echo -e "${YELLOW}Attempt $attempt failed due to network issues. Retrying in 2 seconds...${NC}"
+      sleep 2
+    done
+  fi
+
+  if [ "$DOWNLOAD_SUCCESS" = true ] && [ -f "$TMP_ICON_TAR" ]; then
+    echo -e "${YELLOW}Setting up icons...${NC}"
+    tar -xf "$TMP_ICON_TAR" -C "$HOME/.icons/"
+    rm -f "$TMP_ICON_TAR"
+    if [ -d "$ICON_DEST" ]; then
+      echo -e "${GREEN}Icons set up successfully!${NC}"
+    fi
+  else
+    echo -e "${RED}Failed to download icon theme after 3 attempts due to network issues.${NC}"
+    echo -e "${YELLOW}You can manually download and extract the icon theme using this command:${NC}"
+    echo -e "${GREEN}mkdir -p ~/.icons && curl -sSL https://github.com/fallenwesii/minimal6/releases/latest/download/icons.tar.xz | tar -xJ -C ~/.icons/${NC}"
+  fi
+fi
+
+# --- 13. Tuned Service and Passwordless tuned-adm ---
+echo -e "${YELLOW}Configuring Tuned and passwordless tuned-adm profile switching...${NC}"
+# Enable and start tuned service
+if systemctl is-active --quiet tuned; then
+  echo -e "${GREEN}Tuned service is already running.${NC}"
+else
+  echo -e "${BLUE}Starting and enabling tuned service...${NC}"
+  sudo systemctl enable --now tuned
+fi
+
+# Create sudoers rule for passwordless tuned-adm profile switching
+TUNED_SUDOERS_FILE="/etc/sudoers.d/99-tuned-adm"
+if [ ! -f "$TUNED_SUDOERS_FILE" ]; then
+  echo -e "${BLUE}Creating sudoers rule to allow running tuned-adm without a password...${NC}"
+  echo "%wheel ALL=(ALL:ALL) NOPASSWD: /usr/bin/tuned-adm" | sudo tee "$TUNED_SUDOERS_FILE" > /dev/null
+  sudo chmod 440 "$TUNED_SUDOERS_FILE"
+  echo -e "${GREEN}Sudoers rule created successfully.${NC}"
+else
+  echo -e "${GREEN}Sudoers rule for tuned-adm already exists.${NC}"
+fi
+
+# --- 14. QT/Kvantum Environment configuration ---
 echo -e "${YELLOW}Setting up QT/Kvantum environment...${NC}"
 mkdir -p "$HOME/.config/environment.d"
 QT_CONF="$HOME/.config/environment.d/10-qt.conf"

@@ -9,17 +9,19 @@ A comprehensive list of packages required for the **msc** environment.
 - **gtklock**: GTK-based lockscreen for Wayland.
 - **gammastep**: blue light filter.
 - **xdg-desktop-portal-wlr**: xdg-desktop-portal backend for wlroots.
-- **autotiling**: used for dynamic tiling like master layout in Hyprland 
+- **xdg-desktop-portal-gtk**: GTK backend for xdg-desktop-portal (file pickers).
+- **autotiling**: used for dynamic tiling like master layout in Hyprland
 
 ### Interface & Shell
-- **waybar**: Highly customizable Wayland bar for Hyprland.
-- **dunst**: Lightweight replacement for the notification-daemons.
+- **waybar**: Highly customizable Wayland bar.
+- **swaync**: Notification center and control center for Wayland.
 - **wofi**: A launcher/menu program for Wayland.
 - **wlogout (AUR)**: A logout menu for Wayland.
 - **wofi-emoji (AUR)**: Emoji picker using wofi.
+- **gsimplecal**: Simple calendar for Wayland (calendar popup for Waybar).
 - **nwg-look**: GTK3 settings editor (GNOME customization tool).
 - **fzf**: Command-line fuzzy finder, used in help and settings scripts.
-
+- **gum**: Tool for glamorous shell scripts (used in setup wizard).
 
 ### Utilities & Tools
 - **grim**: Screenshot utility for Wayland.
@@ -38,6 +40,8 @@ A comprehensive list of packages required for the **msc** environment.
 - **psmisc**: Utilities that use the proc filesystem (provides `killall`).
 - **procps-ng**: Utilities for browsing procfs (provides `pgrep`, `pkill`).
 - **iproute2**: Networking and traffic control engine (provides `ip`).
+- **xorg-xhost**: X host access control (for root GUI apps).
+- **gamemode**: Daemon/lib for optimizing gaming performance.
 
 ### Audio & Bluetooth
 - **pipewire**: Low-latency audio/video router and processor.
@@ -73,4 +77,4 @@ A comprehensive list of packages required for the **msc** environment.
 
 ### Networking
 - **networkmanager**: Network management daemon (provides `nmcli`, `nmtui`).
-- **nm-applet (AUR)**: NetworkManager system tray applet (provided by `network-manager-applet`).
+- **network-manager-applet**: NetworkManager system tray applet.

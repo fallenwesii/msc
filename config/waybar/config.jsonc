@@ -11,12 +11,13 @@
     "sway/window"
   ],
   "modules-right": [
-    "custom/network_speed",
+    "network#speed",
+    "custom/notification",
     "custom/tuned",
     "memory",
     "cpu",
-    "pulseaudio",
     "battery",
+    "custom/battery-watcher",
     "custom/nightmode",
     "custom/bluetooth",
     "network",
@@ -29,8 +30,8 @@
   "clock": {
     "format": " 󰸗 {:%I:%M %p} ",
     "interval": 60,
-    "tooltip": true,
-    "tooltip-format": "{:%A, %d %B %Y}"
+    "tooltip": false,
+    "on-click": "gsimplecal"
   },
   "sway/workspaces": {
     "format": "{icon}",
@@ -70,7 +71,7 @@
       "210": "10"
     }
   },
-  "hyprland/window": {
+  "sway/window": {
     "format": "{}"
   },
   "memory": {
@@ -82,13 +83,6 @@
     "format": " {usage}% ",
     "tooltip": true,
     "tooltip-format": "CPU: {usage}%\nLoad: {load}\nAvg frequency: {avg_frequency} GHz"
-  },
-  "pulseaudio": {
-    "format": " {volume}% ",
-    "tooltip": true,
-    "tooltip-format": "{desc}: {volume}%",
-    "scroll-step": 1,
-    "on-click": "pavucontrol"
   },
   "custom/nightmode": {
     "exec": "bash -lc '~/.config/waybar/scripts/hyprsunset.sh status'",
@@ -114,14 +108,30 @@
     "interval": 2,
     "on-click": "kitty -e nmtui"
   },
+  "network#speed": {
+    "format": "󰁞󰁆 {bandwidthTotalBytes} ",
+    "format-wifi": "󰁞󰁆 {bandwidthTotalBytes} ",
+    "format-ethernet": "󰁞󰁆 {bandwidthTotalBytes} ",
+    "format-disconnected": "󰁞󰁆 0 B/s ",
+    "tooltip": true,
+    "tooltip-format": "󰁆 {bandwidthDownBytes}   󰁞 {bandwidthUpBytes}",
+    "tooltip-format-wifi": "󰁆 {bandwidthDownBytes}   󰁞 {bandwidthUpBytes}",
+    "tooltip-format-ethernet": "󰁆 {bandwidthDownBytes}   󰁞 {bandwidthUpBytes}",
+    "tooltip-format-disconnected": "󰁆 0 B/s   󰁞 0 B/s",
+    "interval": 2
+  },
   "battery": {
+    "states": {
+      "warning": 14,
+      "critical": 5
+    },
+    "interval": 30,
     "format": "{capacity}% {icon} ",
     "format-charging": "{capacity}% {icon}  ",
     "format-plugged": "{capacity}% {icon}  ",
     "format-full": "{capacity}% {icon} ",
     "format-discharging": "{capacity}% {icon} ",
     "tooltip": true,
-    // "tooltip-format": "Battery: {capacity}%\nStatus: {status}\nTime: {time}",
     "format-icons": [
       "",
       "",
@@ -130,10 +140,35 @@
       ""
     ]
   },
+  "custom/battery-watcher": {
+    "exec": "bash -lc '~/.config/waybar/scripts/battery-watcher.sh'",
+    "interval": 30,
+    "tooltip": false
+  },
   "custom/powermenu": {
     "format": " ",
     "tooltip": false,
     "on-click": "exec wlogout -p layer-shell"
+  },
+  "custom/notification": {
+    "tooltip": false,
+    "format": "{icon}",
+    "format-icons": {
+      "notification": "󱅫",
+      "none": "󰂜",
+      "dnd-notification": "󰂛",
+      "dnd-none": "󰪑",
+      "inhibited-notification": "󱅫",
+      "inhibited-none": "󰂜",
+      "dnd-inhibited-notification": "󰂛",
+      "dnd-inhibited-none": "󰪑"
+    },
+    "return-type": "json",
+    "exec-if": "which swaync-client",
+    "exec": "swaync-client -swb",
+    "on-click": "swaync-client -t -sw",
+    "on-click-right": "swaync-client -d -sw",
+    "escape": true
   },
   "custom/tuned": {
     "exec": "tuned-adm active | awk '{ if ($4 == \"powersave\") print \"{\\\"text\\\":\\\"\\\",\\\"class\\\":\\\"powersave\\\"}\"; else if ($4 == \"balanced\") print \"{\\\"text\\\":\\\"󰾆\\\",\\\"class\\\":\\\"balanced\\\"}\"; else print \"{\\\"text\\\":\\\"󰓅\\\",\\\"class\\\":\\\"performance\\\"}\" }'",
@@ -141,13 +176,7 @@
     "interval": 5,
     "tooltip": true,
     "tooltip-format": "Left-Click: Powersave\nRight-Click: Balanced",
-    "on-click": "sudo tuned-adm profile powersave && pkill -SIGUSR2 waybar && kitty notify-send 'Powersaving mode'",
-    "on-click-right": "sudo tuned-adm profile balanced && pkill -SIGUSR2 waybar"
-  },
-  "custom/network_speed": {
-    "exec": "~/.local/bin/net-speed.sh",
-    "format": "{}",
-    "interval": 2,
-    "tooltip": false
+    "on-click": "sudo tuned-adm profile powersave && notify-send 'Powersaving mode' && pkill -SIGUSR2 waybar",
+    "on-click-right": "sudo tuned-adm profile balanced && notify-send 'Balanced mode' && pkill -SIGUSR2 waybar"
   }
 }
