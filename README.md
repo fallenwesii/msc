@@ -1,7 +1,7 @@
 # msc
 
 My swayfx configuration(msc).
-This is a port of my [minimal6](https://github.com/fallenwesii/minimal6) dotfiles to sway(swayfx), so if you value eye candy with flashy animation, it's worth having.
+This is a port of my [minimal6](https://github.com/fallenwesii/minimal6) dotfiles to sway(swayfx), so if you value eye candy with flashy animation, it's worth checking it out.
 
 ## ✨ Features
 
