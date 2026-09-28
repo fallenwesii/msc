@@ -86,7 +86,7 @@ fi
 # Warning for important components
 if ! command -v sddm &>/dev/null && ! command -v gdm &>/dev/null && ! command -v ly &>/dev/null; then
   echo -e "${RED}Warning: No Login Manager (SDDM/GDM/LY) detected.${NC}"
-  echo -e "${YELLOW}Minimal6 installs only the required packages but a login manager is recommended for a seamless experience.${NC}"
+  echo -e "${YELLOW}msc installs only the required packages but a login manager is recommended for a seamless experience.${NC}"
   sleep 2
 fi
 
@@ -96,7 +96,7 @@ echo -e "Wait! i almost forgot, i have realised you haven't read the terms and c
 sleep 5
 clear
 echo -e "\v\v\t\t${NC}Terms and conditions${NC} "
-echo -e "\tAs a condition of using minimal6 dotfiles you agree to: "
+echo -e "\tAs a condition of using MSC dotfiles you agree to: "
 echo -e "\t1. Tell everyone that you use linux"
 echo -e "\t2. Hate windows 11 as much as you can"
 echo -e "\v\v\v\v\v\v\v"
@@ -521,8 +521,6 @@ systemctl --user daemon-reload
 echo -e "${GREEN}QT/Kvantum environment configured and systemd user manager reloaded.\nA reboot is recommended for Qt/Kvantum theming${NC}"
 
 # --- 13. Final Message ---
-clear
-show_header
 if command -v gum &>/dev/null; then
   gum style --foreground 82 --border-foreground 82 --border normal --align center --width 50 \
     "Setup Complete!" "Press Super + H for Keybinds Help"

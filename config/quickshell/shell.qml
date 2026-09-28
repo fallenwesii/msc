@@ -142,7 +142,7 @@ ShellRoot {
             PanelWindow {
                 id: corners
                 screen: screenScope.modelData
-                visible: !screenScope.hasFullscreen
+                visible: !hasFullscreen
                 color: "transparent"
                 implicitWidth: screen.width
                 implicitHeight: screen.height
@@ -208,6 +208,20 @@ ShellRoot {
                         function onCornerColorChanged() { topRight.requestPaint(); }
                         function onCornerRadiusChanged() { topRight.requestPaint(); }
                     }
+                }
+            }
+        }
+    }
+
+    // Update corner visibility when fullscreen state changes
+    Connections {
+        target: Hyprland
+        function onActiveWindowChanged() {
+            for (let i = 0; i < Quickshell.screens.length; i++) {
+                const screen = Quickshell.screens[i];
+                const hasFs = shell.screenHasFullscreen(screen);
+                if (corners && corners[i]) {
+                    corners[i].visible = !hasFs;
                 }
             }
         }
