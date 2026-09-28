@@ -13,7 +13,7 @@ import Quickshell.Widgets
 ShellRoot {
     id: shell
 
-    property int cornerRadius: 14
+    property int cornerRadius: 15
     property color cornerColor: "#05070a"
     property string backlightDevice: "intel_backlight"
     property string matugenColorsPath: "/home/wesii/.config/quickshell/generated/colors.json"
@@ -232,8 +232,8 @@ ShellRoot {
 
             Rectangle {
                 anchors.fill: parent
-                radius: 8
-                color: shell.md3Color("surface_container_high", "#0b0f14")
+                radius: 19
+                color: shell.md3Color("background", "#0b0f14")
                 border.color: shell.md3Color("outline_variant", "#25313a")
                 border.width: 1
 
@@ -296,6 +296,37 @@ ShellRoot {
                     }
                 }
             }
+        }
+    }
+
+    // Clock widget at top-right, Background layer (above wallpaper, below apps)
+    PanelWindow {
+        id: clockWindow
+        screen: Quickshell.screens[0]
+
+        // Background layer: above wallpaper, below normal windows
+        WlrLayershell.layer: WlrLayer.Background
+        WlrLayershell.namespace: "quickshell-clock-analog"
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        WlrLayershell.exclusiveZone: 0
+
+        // Position at top-right
+        anchors.top: true
+        anchors.right: true
+        margins.top: 80
+        margins.right: 32
+
+        // Size
+        implicitWidth: 220
+        implicitHeight: 300
+
+        // Transparent background
+        color: "transparent"
+
+        // The clock face
+        Loader {
+            anchors.fill: parent
+            source: "clock/ClockFaceAnalog.qml"
         }
     }
 }

@@ -1,14 +1,21 @@
 return {
+  -- Configure Tokyonight colorscheme (opaque background)
   {
     "folke/tokyonight.nvim",
-    lazy = false,
-    priority = 1000,
     opts = {
-      transparent = true, -- This removes the solid background color
+      transparent = false,
       styles = {
-        sidebars = "transparent",
-        floats = "transparent",
+        sidebars = "dark",
+        floats = "dark",
       },
+    },
+  },
+
+  -- Set Tokyonight as the active colorscheme for LazyVim
+  {
+    "LazyVim/LazyVim",
+    opts = {
+      colorscheme = "tokyonight",
     },
   },
 }
