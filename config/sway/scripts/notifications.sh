@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Check dependencies
-for cmd in jq fzf dunstctl; do
+for cmd in jq fzf swaync-client; do
   if ! command -v "$cmd" &>/dev/null; then
     echo "$cmd is required. Please install it."
     exit 1
@@ -29,16 +29,17 @@ C_FG=$(get_color "on_surface")
 C_BGplus=$(get_color "surface_container_high")
 C_FGplus=$(get_color "on_surface")
 
-# Fetch Dunst history
-history=$(dunstctl history)
+# Fetch swaync history
+# swaync-client -H returns JSON array of notifications
+history=$(swaync-client -H)
 
 # Parse history into a list for fzf
 # Format: [ID] App: Summary | Body
 # We use jq to clean up the output and handle potential special characters
 entries=$(echo "$history" | jq -r '
-    .data[0] | sort_by(.timestamp.data) | reverse | .[] | 
-    "[\(.id.data)] \(.appname.data): \(.summary.data) | \(.body.data)"
-' | sed 's/\\n/ /g')
+    . | sort_by(.timestamp) | reverse | .[] |
+    "[\(.id)] \(.appName): \(.summary) | \(.body)"
+' | sed 's/\n/ /g')
 
 # Run fzf
 # --with-nth=2.. hides the ID from the search/display but we can still extract it
@@ -57,12 +58,12 @@ if [[ -n "$selected" ]]; then
 
   if [[ -n "$id" ]]; then
     # Pop the notification back to active status
-    dunstctl history-pop "$id"
+    swaync-client -p "$id"
 
     # Small delay to ensure the notification is popped before calling action
     sleep 0.1
 
     # Trigger the default action (usually opens the app)
-    dunstctl action
+    swaync-client -a
   fi
 fi

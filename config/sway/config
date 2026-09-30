@@ -16,5 +16,7 @@ include conf/windowrules.conf
 include conf/workspaces.conf
 include conf/startup.conf
 include conf/keybinds.conf
+include conf/misc.conf
+include conf/monitors.conf
 
 include colors.conf

@@ -27,11 +27,7 @@ get_battery_info() {
 notify_user() {
   local msg="$1"
   local urgency="${2:-normal}"
-  if command -v dunstify >/dev/null 2>&1; then
-    dunstify -u "$urgency" -a "Battery" "Battery" "$msg" -i "battery-caution" -r 9991
-  elif command -v notify-send >/dev/null 2>&1; then
-    notify-send -u "$urgency" -a "Battery" "Battery" "$msg" -i "battery-caution" -r 9991
-  fi
+  notify-send -u "$urgency" -a "Battery" "Battery" "$msg" -i "battery-caution" -r 9991
 }
 
 read -r cap stat < <(get_battery_info)

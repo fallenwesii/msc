@@ -16,11 +16,7 @@ fi
 
 # Check if the wallpapers directory is empty
 if [ ! -d "$WALL_DIR" ] || [ -z "$(ls -A "$WALL_DIR" 2>/dev/null)" ]; then
-  if command -v dunstify &>/dev/null; then
-    dunstify -u critical -a "Wallpaper Picker" "No wallpapers found in $WALL_DIR"
-  else
-    notify-send "Wallpaper Picker" "No wallpapers found in $WALL_DIR"
-  fi
+  notify-send "Wallpaper Picker" "No wallpapers found in $WALL_DIR"
   exit 1
 fi
 
@@ -511,13 +507,8 @@ if [ -n "$FULL_PATH" ] && [ -f "$FULL_PATH" ]; then
   fi
 
   # Desktop notification indicating success
-  if command -v dunstify &>/dev/null; then
-    dunstify -u low -a "Wallpaper Picker" -i "$FULL_PATH" "Theme Updated" "Applied wallpaper: $(basename "$FULL_PATH")"
-    echo "dark" >~/.cache/matugen_mode
-  else
-    echo "dark" >~/.cache/matugen_mode
-    notify-send "Theme Updated" "Applied wallpaper: $(basename "$FULL_PATH")"
-  fi
+  notify-send -a "Wallpaper Picker" -i "$FULL_PATH" "Theme Updated" "Applied wallpaper: $(basename "$FULL_PATH")"
+  echo "dark" >~/.cache/matugen_mode
 fi
 
 # Close host Kitty window process on normal completion
