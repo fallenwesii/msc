@@ -4,7 +4,7 @@ import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Hyprland
+
 import Quickshell.Io
 import Quickshell.Services.Pipewire
 import Quickshell.Wayland
@@ -56,14 +56,61 @@ ShellRoot {
     // single non-level-specific brightness icon — there's no "-low-"/"-medium-"
     // variant to switch between, so this is intentionally static.
 
+    // Sway: map of output name -> bool indicating a fullscreen window is present
+    property var fullscreenOutputs: ({})
+
     function screenHasFullscreen(screen) {
-        const monitor = Hyprland.monitorFor(screen);
-        return monitor?.activeWorkspace?.hasFullscreen ?? false;
+        return fullscreenOutputs[screen.name] ?? false;
     }
 
     function numberFromFile(fileView) {
         const value = parseInt(fileView.text().trim());
         return Number.isNaN(value) ? 0 : value;
+    }
+
+    // Subscribe to sway window/workspace events; on any event kick off a tree query
+    Process {
+        id: swayEventWatcher
+        command: ["swaymsg", "--monitor", "-t", "subscribe", '["window", "workspace"]']
+        running: true
+        stdout: SplitParser {
+            onRead: line => {
+                swayTreeQuery.running = false;
+                swayTreeQuery.running = true;
+            }
+        }
+    }
+
+    // Query sway tree and build a per-output fullscreen map
+    Process {
+        id: swayTreeQuery
+        command: [
+            "bash", "-c",
+            "swaymsg -t get_tree | python3 -c \"\n" +
+            "import json,sys\n" +
+            "tree=json.load(sys.stdin)\n" +
+            "def fs(n):\n" +
+            "    if n.get('fullscreen_mode',0)>0: return True\n" +
+            "    return any(fs(c) for c in n.get('nodes',[])+n.get('floating_nodes',[]))\n" +
+            "[ print(o['name']) for o in tree.get('nodes',[]) if fs(o) ]\n" +
+            "\""
+        ]
+        running: false
+
+        property string _buf: ""
+
+        stdout: SplitParser {
+            onRead: line => swayTreeQuery._buf += (swayTreeQuery._buf ? "\n" : "") + line
+        }
+
+        onExited: (code, status) => {
+            const lines = _buf.trim().split("\n").filter(l => l.length > 0);
+            const map = {};
+            for (const name of lines)
+                map[name] = true;
+            shell.fullscreenOutputs = map;
+            _buf = "";
+        }
     }
 
     PwObjectTracker {
@@ -139,6 +186,13 @@ ShellRoot {
             property var modelData
             property bool hasFullscreen: shell.screenHasFullscreen(modelData)
 
+            Connections {
+                target: shell
+                function onFullscreenOutputsChanged() {
+                    screenScope.hasFullscreen = shell.screenHasFullscreen(screenScope.modelData);
+                }
+            }
+
             PanelWindow {
                 id: corners
                 screen: screenScope.modelData
@@ -213,19 +267,7 @@ ShellRoot {
         }
     }
 
-    // Update corner visibility when fullscreen state changes
-    Connections {
-        target: Hyprland
-        function onActiveWindowChanged() {
-            for (let i = 0; i < Quickshell.screens.length; i++) {
-                const screen = Quickshell.screens[i];
-                const hasFs = shell.screenHasFullscreen(screen);
-                if (corners && corners[i]) {
-                    corners[i].visible = !hasFs;
-                }
-            }
-        }
-    }
+
 
     LazyLoader {
         active: shell.shouldShowOsd
