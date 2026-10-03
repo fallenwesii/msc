@@ -482,17 +482,8 @@ fi
 
 # --- 14. QT/Kvantum Environment configuration ---
 echo -e "${YELLOW}Setting up QT/Kvantum environment...${NC}"
-mkdir -p "$HOME/.config/environment.d"
-QT_CONF="$HOME/.config/environment.d/10-qt.conf"
-if [ -f "$QT_CONF" ]; then
-  # Remove existing wayland/qt6ct lines if any to avoid duplication
-  sed -i '/QT_QPA_PLATFORM=/d' "$QT_CONF"
-  sed -i '/QT_QPA_PLATFORMTHEME=/d' "$QT_CONF"
-fi
-echo "QT_QPA_PLATFORM=wayland" >>"$QT_CONF"
-echo "QT_QPA_PLATFORMTHEME=qt6ct" >>"$QT_CONF"
 systemctl --user daemon-reload
-echo -e "${GREEN}QT/Kvantum environment configured and systemd user manager reloaded.\nA reboot is recommended for Qt/Kvantum theming${NC}"
+echo -e "${GREEN}QT/Kvantum environment configured (via 90-msc.conf) and systemd user manager reloaded.\nA reboot is recommended for Qt/Kvantum theming${NC}"
 
 # --- 13. Final Message ---
 if command -v gum &>/dev/null; then
