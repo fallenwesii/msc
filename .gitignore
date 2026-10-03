@@ -31,6 +31,10 @@ config/qt6ct/colors/matugen.conf
 config/Kvantum/matugen/
 kvantum-themes/matugen/
 
+# Config files that should not be tracked (user-specific or generated)
+config/btop/btop.conf
+
+
 # Python & Temporary / Backup Files
 __pycache__/
 *.py[cod]
