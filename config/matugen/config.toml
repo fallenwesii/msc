@@ -95,6 +95,8 @@ output_path = '~/.config/wlogout/colors.css'
 # ----------------------------------------------------
 #  MEDIA & SYSTEM MONITORING
 # ----------------------------------------------------
+
+
 [templates.btop]
 input_path = '~/.config/matugen/templates/btop.theme'
 output_path = '~/.config/btop/themes/matugen.theme'
@@ -122,10 +124,6 @@ input_path = '~/.config/matugen/templates/quickshell.json'
 output_path = '~/.config/quickshell/generated/colors.json'
 post_hook = 'quickshell kill >/dev/null 2>&1 || true; qs -d >/dev/null 2>&1'
 
-
-[templates.gtklock]
-input_path = '~/.config/matugen/templates/gtklock.css'
-output_path = '~/.config/gtklock/colors.css'
 
 [templates.obsidian]
 input_path = '~/.config/matugen/templates/obsidian.css'

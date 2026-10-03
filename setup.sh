@@ -27,7 +27,7 @@ show_header
 
 # --- Package Lists ---
 PACMAN_PKGS=(
-  "swayidle" "gtklock" "gammastep"
+  "swayidle" "gammastep"
   "xdg-desktop-portal-wlr" "xdg-desktop-portal-gtk" "waybar" "swaync" "wofi" "nwg-look"
   "fzf" "gum" "figlet" "grim" "slurp" "wl-clipboard" "cliphist"
   "brightnessctl" "pavucontrol" "polkit-gnome" "gvfs" "tuned" "jq"
@@ -237,21 +237,7 @@ fi
 # --- 7. Paths and Assets ---
 echo -e "${YELLOW}Setting up scripts and wallpapers...${NC}"
 
-# net-speed.sh does not work with symlinks: copy instead
-if [ -f "$HOME/.local/bin/net-speed.sh" ]; then
-  read -p "Overwrite existing ~/.local/bin/net-speed.sh? (y/n): " choice
-  if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
-    cp "$DOTFILES_DIR/net-speed.sh" "$HOME/.local/bin/"
-    chmod +x "$HOME/.local/bin/net-speed.sh"
-    echo -e "${GREEN}Updated net-speed.sh${NC}"
-  else
-    echo "Skipping net-speed.sh"
-  fi
-else
-  cp "$DOTFILES_DIR/net-speed.sh" "$HOME/.local/bin/"
-  chmod +x "$HOME/.local/bin/net-speed.sh"
-  echo -e "${GREEN}Installed net-speed.sh${NC}"
-fi
+
 
 # --- 8. Resolve Hardcoded Paths ---
 # Fix hardcoded paths for the current user in configs
@@ -279,20 +265,7 @@ if [ -f "$SHELL_QML" ] || [ -L "$SHELL_QML" ]; then
   echo -e "${GREEN}Fixed paths in quickshell/shell.qml${NC}"
 fi
 
-# -- gtklock colors and config --
-GTKLOCK_COLORS="$CONF_DIR/gtklock/colors.css"
-if [ -f "$GTKLOCK_COLORS" ] || [ -L "$GTKLOCK_COLORS" ]; then
-  REAL_GL_COLORS=$(realpath "$GTKLOCK_COLORS" 2>/dev/null || echo "$GTKLOCK_COLORS")
-  sed_inplace "s|/home/[a-zA-Z0-9_-]*/Pictures/wallpapers|$HOME/Pictures/wallpapers|g" "$REAL_GL_COLORS"
-  echo -e "${GREEN}Fixed wallpaper path in gtklock/colors.css${NC}"
-fi
 
-GTKLOCK_CONF="$CONF_DIR/gtklock/config.ini"
-if [ -f "$GTKLOCK_CONF" ] || [ -L "$GTKLOCK_CONF" ]; then
-  REAL_GL_CONF=$(realpath "$GTKLOCK_CONF" 2>/dev/null || echo "$GTKLOCK_CONF")
-  sed_inplace "s|/home/[a-zA-Z0-9_-]*/.config/gtklock|$HOME/.config/gtklock|g" "$REAL_GL_CONF"
-  echo -e "${GREEN}Fixed style path in gtklock/config.ini${NC}"
-fi
 
 # -- sway/palette.conf --
 SWAY_PALETTE="$CONF_DIR/sway/palette.conf"
@@ -371,7 +344,7 @@ fi
 
 # --- 10. Final Verification ---
 echo -e "${YELLOW}Verifying important Sway packages...${NC}"
-SWAY_PKGS=("swayfx" "swayidle" "gtklock" "waybar")
+SWAY_PKGS=("swayfx" "swayidle" "waybar")
 for pkg in "${SWAY_PKGS[@]}"; do
   if ! check_package "$pkg" && ! yay -Qi "$pkg" &>/dev/null; then
     echo -e "${RED}$pkg is missing! Attempting to install...${NC}"
@@ -472,6 +445,7 @@ else
   fi
 
   if [ "$DOWNLOAD_SUCCESS" = true ] && [ -f "$TMP_ICON_TAR" ]; then
+    mkdir -p "$HOME/.icons"
     echo -e "${YELLOW}Setting up icons...${NC}"
     tar -xf "$TMP_ICON_TAR" -C "$HOME/.icons/"
     rm -f "$TMP_ICON_TAR"
