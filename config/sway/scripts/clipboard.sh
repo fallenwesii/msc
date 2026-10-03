@@ -13,7 +13,7 @@ for line in "${raw[@]}"; do
   displayed+=("${line#*$'\t'}")
 done
 
-sel=$(printf '%s\n' "${displayed[@]}" | wofi --dmenu --prompt "Clipboard")
+sel=$(printf '%s\n' "${displayed[@]}" | wofi --dmenu --sort-order default --prompt "Clipboard")
 [ -z "$sel" ] && exit 0
 
 for i in "${!displayed[@]}"; do
