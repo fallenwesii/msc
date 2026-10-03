@@ -1,24 +1,28 @@
 #!/bin/bash
 
-# Toggle ghostty scratchpad - launch if not exists, show if hidden, hide if focused
+# Toggle kitty scratchpad - matches Hyprland togglespecialworkspace behavior
+# First press: launch → park in scratchpad → show
+# Subsequent presses: scratchpad show toggles (show if hidden, hide if focused)
 
-CLASS="ghostty-scratchpad"
+APP_ID="kitty-scratchpad"
 
-# Get the window ID of the scratchpad
-WIN_ID=$(swaymsg -t get_tree | jq -r '.. | select(.class? == "'$CLASS'") | .id' | head -1)
+# Check if window already exists anywhere (scratchpad or workspace)
+WIN_ID=$(swaymsg -t get_tree | jq -r '.. | select(.app_id? == "'"$APP_ID"'") | .id' | head -1)
 
 if [ -z "$WIN_ID" ]; then
-    # Not exists - launch it
-    exec ghostty --class="$CLASS"
+    # Not running — launch it, wait for it to appear, park in scratchpad, then show
+    kitty --app-id="$APP_ID" --class="$APP_ID" &
+    # Poll until the window appears (max ~3s)
+    for i in $(seq 1 30); do
+        sleep 0.1
+        WIN_ID=$(swaymsg -t get_tree | jq -r '.. | select(.app_id? == "'"$APP_ID"'") | .id' | head -1)
+        [ -n "$WIN_ID" ] && break
+    done
+    [ -z "$WIN_ID" ] && exit 1
+    # Park it in scratchpad first, then bring it up
+    swaymsg "[con_id=$WIN_ID] move scratchpad"
+    swaymsg "[app_id=$APP_ID] scratchpad show"
 else
-    # Exists - check if focused
-    FOCUSED=$(swaymsg -t get_tree | jq -r '.. | select(.focused == true) | .id')
-    
-    if [ "$WIN_ID" = "$FOCUSED" ]; then
-        # Focused - hide it (move to scratchpad)
-        swaymsg "[con_id=$WIN_ID] move scratchpad"
-    else
-        # Not focused - show it
-        swaymsg "[con_id=$WIN_ID] scratchpad show"
-    fi
+    # Already running — scratchpad show toggles: shows if hidden, hides if focused
+    swaymsg "[app_id=$APP_ID] scratchpad show"
 fi
