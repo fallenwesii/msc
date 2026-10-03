@@ -16,9 +16,9 @@ kill_swayidle() {
 
 start_swayidle() {
   swayidle -w \
-    timeout 300 'swaymsg exec gtklock' \
+    timeout 300 'swaymsg exec hyprlock' \
     timeout 600 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' \
-    before-sleep 'swaymsg exec gtklock' &
+    before-sleep 'swaymsg exec hyprlock' &
   swayidle_pid=$!
 }
 

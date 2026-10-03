@@ -79,11 +79,48 @@ generate_thumbnails() {
     done
   done
 }
-# Start thumbnail generation in background (double-forked so it persists after script exits)
-(generate_thumbnails &) &>/dev/null
-
 # Find all wallpapers in WALL_DIR, and shuffle them on launch using shuf
 mapfile -t ALL_WALLPAPERS < <(find "$WALL_DIR" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" -o -iname "*.gif" \) | shuf)
+
+# Pre-generate thumbnails for first N wallpapers synchronously to avoid empty cards on first render
+# (rest will be generated asynchronously in background)
+PRELOAD_COUNT=$((N < ${#ALL_WALLPAPERS[@]} ? N : ${#ALL_WALLPAPERS[@]}))
+for ((i = 0; i < PRELOAD_COUNT; i++)); do
+  file="${ALL_WALLPAPERS[i]}"
+  filename=$(basename "$file")
+  thumb_path="$CACHE_DIR/${filename}.png"
+  border_thumb_path="$CACHE_DIR/${filename}.border.png"
+  color_path="$CACHE_DIR/${filename}.colors"
+
+  if [ ! -f "$thumb_path" ] || [ "$file" -nt "$thumb_path" ]; then
+    if [[ "$file" =~ \.[gG][iI][fF]$ ]]; then
+      magick "${file}[0]" -resize 200x200^ -gravity center -extent 200x200 \
+        \( +clone -alpha transparent -fill white -draw "roundrectangle 0,0 199,199 15,15" -alpha extract \) \
+        -compose CopyOpacity -composite "$thumb_path" &>/dev/null
+    else
+      magick "$file" -resize 200x200^ -gravity center -extent 200x200 \
+        \( +clone -alpha transparent -fill white -draw "roundrectangle 0,0 199,199 15,15" -alpha extract \) \
+        -compose CopyOpacity -composite "$thumb_path" &>/dev/null
+    fi
+  fi
+
+  if [ ! -f "$color_path" ] || [ "$file" -nt "$color_path" ]; then
+    if command -v matugen &>/dev/null && command -v jq &>/dev/null; then
+      matugen image "$file" -j hex --dry-run 2>/dev/null | jq -r '.colors.primary.default.color, .colors.on_primary.default.color, .colors.primary_container.default.color, .colors.on_primary_container.default.color' >"$color_path"
+    else
+      echo -e "#ffffff\n#000000\n#333333\n#ffffff" >"$color_path"
+    fi
+  fi
+
+  primary_color="#ffffff"
+  if [ -f "$color_path" ]; then
+    primary_color=$(head -n 1 "$color_path")
+  fi
+  magick "$thumb_path" \( +clone -fill none -stroke "$primary_color" -strokewidth 3 -draw "roundrectangle 1.5,1.5 198.5,198.5 15,15" \) -composite "$border_thumb_path" &>/dev/null
+done
+
+# Start thumbnail generation for remaining wallpapers in background
+(generate_thumbnails &) &>/dev/null
 
 # State variables
 QUERY=""
