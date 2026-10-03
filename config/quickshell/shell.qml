@@ -68,6 +68,7 @@ ShellRoot {
         return Number.isNaN(value) ? 0 : value;
     }
 
+
     // Subscribe to sway window/workspace events; on any event kick off a tree query
     Process {
         id: swayEventWatcher
@@ -86,13 +87,17 @@ ShellRoot {
         id: swayTreeQuery
         command: [
             "bash", "-c",
-            "swaymsg -t get_tree | python3 -c \"\n" +
-            "import json,sys\n" +
-            "tree=json.load(sys.stdin)\n" +
-            "def fs(n):\n" +
-            "    if n.get('fullscreen_mode',0)>0: return True\n" +
-            "    return any(fs(c) for c in n.get('nodes',[])+n.get('floating_nodes',[]))\n" +
-            "[ print(o['name']) for o in tree.get('nodes',[]) if fs(o) ]\n" +
+            "swaymsg -t get_tree 2>/dev/null | python3 -c \"\n" +
+            "import json, sys\n" +
+            "tree = json.load(sys.stdin)\n" +
+            "WINDOW_TYPES = {'con', 'floating_con'}\n" +
+            "def has_fs(n):\n" +
+            "    if n.get('type') in WINDOW_TYPES and n.get('fullscreen_mode', 0) > 0:\n" +
+            "        return True\n" +
+            "    return any(has_fs(c) for c in n.get('nodes', []) + n.get('floating_nodes', []))\n" +
+            "for o in tree.get('nodes', []):\n" +
+            "    if o.get('name', '').startswith('__'): continue\n" +
+            "    if has_fs(o): print(o['name'])\n" +
             "\""
         ]
         running: false
@@ -106,8 +111,9 @@ ShellRoot {
         onExited: (code, status) => {
             const lines = _buf.trim().split("\n").filter(l => l.length > 0);
             const map = {};
-            for (const name of lines)
-                map[name] = true;
+            for (let i = 0; i < lines.length; i++) {
+                map[lines[i]] = true;
+            }
             shell.fullscreenOutputs = map;
             _buf = "";
         }
