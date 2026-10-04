@@ -55,19 +55,21 @@ A comprehensive list of packages required for the **msc** environment.
 - **kitty**: Fast, feature-rich, GPU based terminal emulator.
 - **alacritty**: A cross-platform, GPU-accelerated terminal emulator.
 - **brave (AUR)**: Privacy-focused web browser.
-- **nautilus**: GNOME's file manager.
+- **dolphin**: KDE's file manager.
 - **yazi**: Blazing fast terminal file manager written in Rust.
 - **btop**: A monitor of system resources (CPU, Memory, etc.).
 
 ### Theming & Fonts
 - **ttf-jetbrains-mono-nerd**: JetBrains Mono Nerd Font, used in Waybar and terminal.
 - **noto-fonts**: Google Noto TTF fonts.
+- **papirus-icon-theme**: Papirus icon theme for GTK/Qt applications.
 - **qt5-wayland**: Wayland platform plugin for Qt5.
 - **qt5ct**: Qt5 Configuration Tool.
 - **qt6ct**: Qt6 Configuration Tool.
 - **python-pywall (AUR)**: Generate colorschemes from images.
 - **gtk-engine-murrine (AUR)**: Murrine GTK2 engine (required for many GTK themes).
 - **bibata-cursor-theme (AUR)**: Popular material-based cursor theme.
+- **papirus-folders (AUR)**: Tool to recolor Papirus folders with Material You colors.
 
 ### Editors
 - **neovim**: Hyperextensible Vim-based text editor (used for config editing).

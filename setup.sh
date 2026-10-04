@@ -33,8 +33,8 @@ PACMAN_PKGS=(
   "brightnessctl" "pavucontrol" "polkit-gnome" "gvfs" "tuned" "jq"
   "xdg-utils" "git" "libnotify" "psmisc" "procps-ng" "iproute2"
   "pipewire" "wireplumber" "blueman" "bluez" "bluez-utils"
-  "kitty" "alacritty" "nautilus" "yazi" "btop"
-  "ttf-jetbrains-mono-nerd" "noto-fonts" "qt5-wayland" "qt5ct" "qt6ct"
+  "kitty" "alacritty" "dolphin" "yazi" "btop"
+  "ttf-jetbrains-mono-nerd" "noto-fonts" "papirus-icon-theme" "qt5-wayland" "qt5ct" "qt6ct"
   "networkmanager" "network-manager-applet" "base-devel" "xorg-xhost" "quickshell"
   "neovim" "kvantum" "ghostty" "awww"
   "python3" "python-pyfiglet" "matugen" "autotiling"
@@ -44,7 +44,7 @@ PACMAN_PKGS=(
 AUR_PKGS=(
   "swayfx"
   "wlogout" "wofi-emoji" "brave-bin" "nm-connection-editor"
-  "bibata-cursor-theme"
+  "bibata-cursor-theme" "papirus-folders"
 )
 
 # --- 2. Check for Build Tools and AUR Helper ---
@@ -459,7 +459,24 @@ else
   fi
 fi
 
-# --- 13. Tuned Service and Passwordless tuned-adm ---
+# --- 14. Papirus Folders Theming ---
+echo -e "${YELLOW}Theming papirus folders...${NC}"
+# Set Papirus as icon theme for KDE/Qt applications
+kwriteconfig6 --file kdeglobals --group Icons --key Theme Papirus
+echo -e "${GREEN}Set Papirus icon theme via kdeglobals.${NC}"
+
+# Configure passwordless sudo for papirus-folders (for dynamic folder recoloring via matugen)
+PAPIRUS_SUDOERS_FILE="/etc/sudoers.d/papirus-folders"
+if [ ! -f "$PAPERIUS_SUDOERS_FILE" ]; then
+  echo -e "${BLUE}Creating sudoers rule for passwordless papirus-folders...${NC}"
+  echo "$USER ALL=(ALL) NOPASSWD: $(which papirus-folders)" | sudo tee "$PAPERIUS_SUDOERS_FILE" > /dev/null
+  sudo chmod 440 "$PAPERIUS_SUDOERS_FILE"
+  echo -e "${GREEN}Sudoers rule for papirus-folders created.${NC}"
+else
+  echo -e "${GREEN}Sudoers rule for papirus-folders already exists.${NC}"
+fi
+
+# --- 15. Tuned Service and Passwordless tuned-adm ---
 echo -e "${YELLOW}Configuring Tuned and passwordless tuned-adm profile switching...${NC}"
 # Enable and start tuned service
 if systemctl is-active --quiet tuned; then
@@ -480,12 +497,12 @@ else
   echo -e "${GREEN}Sudoers rule for tuned-adm already exists.${NC}"
 fi
 
-# --- 14. QT/Kvantum Environment configuration ---
+# --- 16. QT/Kvantum Environment configuration ---
 echo -e "${YELLOW}Setting up QT/Kvantum environment...${NC}"
 systemctl --user daemon-reload
 echo -e "${GREEN}QT/Kvantum environment configured (via 90-msc.conf) and systemd user manager reloaded.\nA reboot is recommended for Qt/Kvantum theming${NC}"
 
-# --- 13. Final Message ---
+# --- 17. Final Message ---
 if command -v gum &>/dev/null; then
   gum style --foreground 82 --border-foreground 82 --border normal --align center --width 50 \
     "Setup Complete!" "Press Super + H for Keybinds Help"
