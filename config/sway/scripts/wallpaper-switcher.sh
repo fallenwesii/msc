@@ -56,7 +56,7 @@ generate_thumbnails() {
       if [ ! -f "$color_path" ] || [ "$file" -nt "$color_path" ]; then
         if command -v matugen &>/dev/null && command -v jq &>/dev/null; then
           # Extract colors from the original wallpaper file in Pictures/wallpapers
-          matugen image "$file" -j hex --dry-run 2>/dev/null | jq -r '.colors.primary.default.color, .colors.on_primary.default.color, .colors.primary_container.default.color, .colors.on_primary_container.default.color' >"$color_path"
+matugen image "$file" -j hex --dry-run 2>/dev/null | jq -r '.colors.primary.default.color, .colors.on_primary.default.color, .colors.primary_container.default.color, .colors.on_primary_container.default.color' >"$color_path" 2>/dev/null
           colors_generated=true
         else
           echo -e "#ffffff\n#000000\n#333333\n#ffffff" >"$color_path"
@@ -106,7 +106,7 @@ for ((i = 0; i < PRELOAD_COUNT; i++)); do
 
   if [ ! -f "$color_path" ] || [ "$file" -nt "$color_path" ]; then
     if command -v matugen &>/dev/null && command -v jq &>/dev/null; then
-      matugen image "$file" -j hex --dry-run 2>/dev/null | jq -r '.colors.primary.default.color, .colors.on_primary.default.color, .colors.primary_container.default.color, .colors.on_primary_container.default.color' >"$color_path"
+matugen image "$file" -j hex --dry-run 2>/dev/null | jq -r '.colors.primary.default.color, .colors.on_primary.default.color, .colors.primary_container.default.color, .colors.on_primary_container.default.color' >"$color_path" 2>/dev/null
     else
       echo -e "#ffffff\n#000000\n#333333\n#ffffff" >"$color_path"
     fi
@@ -539,9 +539,9 @@ if [ -n "$FULL_PATH" ] && [ -f "$FULL_PATH" ]; then
   # Run matugen: this both applies the wallpaper (via its own [config.wallpaper]
   # hook, which calls awww) and regenerates all color templates (sway, waybar,
   # wofi, gtk, kitty, etc.), reloading each one via their post_hooks.
-  if command -v matugen &>/dev/null; then
-    matugen image "$FULL_PATH" -m dark --source-color-index 0 --lightness-dark 0.14 --contrast 0
-  fi
+if command -v matugen &>/dev/null; then
+     matugen image "$FULL_PATH" -m dark --source-color-index 0 --lightness-dark 0.14 --contrast 0 >/dev/null 2>&1
+   fi
 
   # Desktop notification indicating success
   notify-send -a "Wallpaper Picker" -i "$FULL_PATH" "Theme Updated" "Applied wallpaper: $(basename "$FULL_PATH")"
