@@ -53,4 +53,4 @@ if [ -f "$APPEARANCE" ]; then
     [ -n "$GAPS_OUTER" ] && swaymsg "gaps outer all set $GAPS_OUTER" >/dev/null 2>&1
 fi
 
-notify-send "Sway" "Configuration & Window Rules reloaded" -a "sway" -t 2000
+notify-send "Sway" "Sway reloaded: Configuration & Window Rules reloaded" -a "sway" -t 2000
