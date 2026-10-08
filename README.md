@@ -13,6 +13,7 @@ This is a port of my [minimal6](https://github.com/fallenwesii/minimal6) dotfile
 - Dunst notifications
 - Terminal theming
 - Consistent desktop styling
+- System wide blur via a toggle
 - Automatic theme reload
 - Fast installation
 

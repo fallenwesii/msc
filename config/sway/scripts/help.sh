@@ -32,6 +32,7 @@ declare -A KEYBINDS=(
   ["SUPER + SHIFT + L    │ Lock Screen"]="swaymsg exec hyprlock"
   ["SUPER + SHIFT + Q    │ Power / Logout Menu (wlogout)"]="swaymsg exec 'wlogout -p layer-shell'"
   ["SUPER + SHIFT + B    │ Toggle Waybar Status Bar"]="swaymsg exec ~/.config/sway/scripts/toggle-waybar.sh"
+  ["SUPER + CTRL + B     │ Toggle Systemwide Blur"]="swaymsg exec ~/.config/sway/scripts/toggle-blur.sh"
   ["SUPER + .            │ Open Emoji Picker (wofi-emoji)"]="swaymsg exec wofi-emoji"
   ["SUPER + CTRL + C     │ Edit Sway Config (ghostty)"]="swaymsg exec \"ghostty -e bash -c 'cd ~/.config/sway/ && nvim ~/.config/sway/config'\""
   ["SUPER + CTRL + 1     │ Toggle Caffeine (Prevent Sleep)"]="swaymsg exec ~/.config/sway/scripts/toggle-caffeine.sh"
@@ -57,7 +58,6 @@ declare -A KEYBINDS=(
   ["Print                │ Screenshot Region (Save File)"]="swaymsg exec \"grim -g \\\"\$(slurp)\\\" ~/Pictures/Screenshots/\$(date +'%Y-%m-%d_%H-%M-%S').png\""
   ["SUPER + SHIFT + S    │ Screenshot Region (To Clipboard)"]="swaymsg exec \"grim -g \\\"\$(slurp)\\\" - | wl-copy\""
   ["SUPER + ALT + S      │ Fullscreen Screenshot (Save File)"]="swaymsg exec \"grim ~/Pictures/Screenshots/\$(date +'%Y-%m-%d_%H-%M-%S').png\""
-  ["SUPER + SHIFT +CTRL+B│ Toggle Compact Mode Layout"]="swaymsg exec ~/.config/sway/scripts/toggle-compact.sh"
   ["SUPER + ALT + Return │ Scratchpad (kitty dropdown)"]="swaymsg exec ~/.config/sway/scripts/scratchpad-toggle.sh"
   ["SUPER + Scroll Wheel │ Cycle Active Workspaces Dynamically"]="echo 'Scroll mouse wheel while holding SUPER to shift workspaces'"
 )
