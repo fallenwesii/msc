@@ -41,6 +41,7 @@ A comprehensive list of packages required for the **msc** environment.
 - **procps-ng**: Utilities for browsing procfs (provides `pgrep`, `pkill`).
 - **iproute2**: Networking and traffic control engine (provides `ip`).
 - **xorg-xhost**: X host access control (for root GUI apps).
+- **wooz-git (AUR)**: Zoom / magnifier utility for Wayland.
 - **gamemode**: Daemon/lib for optimizing gaming performance.
 
 ### Audio & Bluetooth

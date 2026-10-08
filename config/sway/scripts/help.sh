@@ -54,6 +54,7 @@ declare -A KEYBINDS=(
   ["SUPER + I            │ Launch Sublime Text"]="swaymsg exec 'subl --launch-or-new-window'"
   ["SUPER + CTRL + P     │ Color Picker (hyprpicker)"]="swaymsg exec 'hyprpicker -a -f hex'"
   ["SUPER + ALT + O      │ Overlaay Toggle"]="swaymsg exec 'sh -c ~/.local/bin/overlaay'"
+  ["SUPER + Z            │ Zoom / Magnifier (wooz)"]="swaymsg exec 'wooz --zoom-in 25% --mouse-track --invert-scroll'"
   ["SUPER + Arrows       │ Move Focus Between Windows"]="echo 'Use SUPER + arrow keys to move focus'"
   ["Print                │ Screenshot Region (Save File)"]="swaymsg exec \"grim -g \\\"\$(slurp)\\\" ~/Pictures/Screenshots/\$(date +'%Y-%m-%d_%H-%M-%S').png\""
   ["SUPER + SHIFT + S    │ Screenshot Region (To Clipboard)"]="swaymsg exec \"grim -g \\\"\$(slurp)\\\" - | wl-copy\""

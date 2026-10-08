@@ -44,7 +44,7 @@ PACMAN_PKGS=(
 AUR_PKGS=(
   "swayfx"
   "wlogout" "wofi-emoji" "brave-bin" "nm-connection-editor"
-  "bibata-cursor-theme" "papirus-folders"
+  "bibata-cursor-theme" "papirus-folders" "wooz-git"
 )
 
 # --- 2. Check for Build Tools and AUR Helper ---
