@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# apply-wallpaper.sh — show the wallpaper immediately, retheme behind it.
+#
+# Handed to sway via `swaymsg exec` by wallpaper-switcher.sh so it keeps
+# running after the picker window dies. Order matters:
+#   1. awww img — wallpaper visible in ~0.2s, 2s grow transition starts.
+#   2. sleep    — wait the transition out; matugen's `swaymsg reload`
+#      (1.3s of sway main-loop time) would otherwise hard-freeze the
+#      animation for ~1s mid-flight.
+#   3. matugen  — templates + hooks (~8s), wallpaper untouched
+#      (config.toml has no [config.wallpaper] section anymore).
+# A pidfile guard kills any previous run still in flight, so switching
+# wallpapers rapidly can never pile up matugen/reload spikes.
+
+set -u
+
+PIDFILE="$HOME/.cache/wallpaper-apply.pid"
+TRANSITION_DURATION=2
+
+IMAGE="${1:-}"
+if [ -z "$IMAGE" ] || [ ! -f "$IMAGE" ]; then
+  exit 1
+fi
+
+# Cancel a previous still-running apply (guarded: pid recycling can't
+# match unless the cmdline really is this script).
+if [ -r "$PIDFILE" ]; then
+  old="$(cat "$PIDFILE" 2>/dev/null)"
+  if [ -n "$old" ] && [ "$old" != "$$" ] &&
+    ps -p "$old" -o args= 2>/dev/null | grep -q "apply-wallpaper"; then
+    pkill -P "$old" 2>/dev/null # its children (matugen/sleep/awww)
+    kill "$old" 2>/dev/null
+  fi
+fi
+echo $$ >"$PIDFILE"
+
+awww img --transition-type grow --transition-duration "$TRANSITION_DURATION" "$IMAGE" >/dev/null 2>&1
+sleep "$TRANSITION_DURATION"
+
+if command -v matugen >/dev/null 2>&1; then
+  matugen image "$IMAGE" -m dark --source-color-index 0 --lightness-dark 0.14 --contrast 0 >/dev/null 2>&1
+fi
+
+notify-send -a 'Wallpaper Picker' -i "$IMAGE" 'Theme Updated' "Applied wallpaper: ${IMAGE##*/}" 2>/dev/null
+echo dark >"$HOME/.cache/matugen_mode"

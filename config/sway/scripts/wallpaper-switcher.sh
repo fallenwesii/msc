@@ -20,14 +20,6 @@ if [ ! -d "$WALL_DIR" ] || [ -z "$(ls -A "$WALL_DIR" 2>/dev/null)" ]; then
   exit 1
 fi
 
-# Must run exclusively in Kitty (check $KITTY_PID)
-if [ -z "$KITTY_PID" ]; then
-  echo "Error: This script must be run inside Kitty terminal." >&2
-  exit 1
-fi
-
-TMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/wallpaper-picker.XXXXXX")
-
 # Asynchronously generate thumbnails for any new or modified wallpapers
 generate_thumbnails() {
   find "$WALL_DIR" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" -o -iname "*.gif" \) | while read -r file; do
@@ -79,12 +71,35 @@ matugen image "$file" -j hex --dry-run 2>/dev/null | jq -r '.colors.primary.defa
     done
   done
 }
+
+# --- Modes ---------------------------------------------------------------
+# --generate-cache: the long-running thumbnail/color work. The UI hands this
+# to sway via `swaymsg exec`, so generation keeps running even after the
+# picker window closes. No kitty/terminal needed in this mode.
+if [ "${1:-}" = "--generate-cache" ]; then
+  generate_thumbnails
+  wait
+  exit 0
+fi
+
+# UI mode must run inside Kitty (check $KITTY_PID)
+if [ -z "$KITTY_PID" ]; then
+  echo "Error: This script must be run inside Kitty terminal." >&2
+  exit 1
+fi
+
+TMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/wallpaper-picker.XXXXXX")
+
 # Find all wallpapers in WALL_DIR, and shuffle them on launch using shuf
 mapfile -t ALL_WALLPAPERS < <(find "$WALL_DIR" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" -o -iname "*.gif" \) | shuf)
 
-# Pre-generate thumbnails for first N wallpapers synchronously to avoid empty cards on first render
-# (rest will be generated asynchronously in background)
-PRELOAD_COUNT=$((N < ${#ALL_WALLPAPERS[@]} ? N : ${#ALL_WALLPAPERS[@]}))
+# Pre-generate thumbnails for first few wallpapers synchronously to avoid empty cards on first render
+# (rest is handed to sway in --generate-cache mode below).
+# N is not defined yet here (layout computes it later), so cap at the max on-screen count.
+PRELOAD_COUNT=7
+if ((PRELOAD_COUNT > ${#ALL_WALLPAPERS[@]})); then
+  PRELOAD_COUNT=${#ALL_WALLPAPERS[@]}
+fi
 for ((i = 0; i < PRELOAD_COUNT; i++)); do
   file="${ALL_WALLPAPERS[i]}"
   filename=$(basename "$file")
@@ -104,23 +119,23 @@ for ((i = 0; i < PRELOAD_COUNT; i++)); do
     fi
   fi
 
-  if [ ! -f "$color_path" ] || [ "$file" -nt "$color_path" ]; then
-    if command -v matugen &>/dev/null && command -v jq &>/dev/null; then
-matugen image "$file" -j hex --dry-run 2>/dev/null | jq -r '.colors.primary.default.color, .colors.on_primary.default.color, .colors.primary_container.default.color, .colors.on_primary_container.default.color' >"$color_path" 2>/dev/null
-    else
-      echo -e "#ffffff\n#000000\n#333333\n#ffffff" >"$color_path"
+  # Color extraction is left to the background pass (matugen takes ~2.4s per
+  # image, far too slow to block startup). Border falls back to white until
+  # colors arrive; the background pass regenerates it with the real color.
+  if [ ! -f "$border_thumb_path" ] || [ "$thumb_path" -nt "$border_thumb_path" ] || [ "$color_path" -nt "$border_thumb_path" ]; then
+    primary_color="#ffffff"
+    if [ -f "$color_path" ]; then
+      primary_color=$(head -n 1 "$color_path")
     fi
+    magick "$thumb_path" \( +clone -fill none -stroke "$primary_color" -strokewidth 3 -draw "roundrectangle 1.5,1.5 198.5,198.5 15,15" \) -composite "$border_thumb_path" &>/dev/null
   fi
-
-  primary_color="#ffffff"
-  if [ -f "$color_path" ]; then
-    primary_color=$(head -n 1 "$color_path")
-  fi
-  magick "$thumb_path" \( +clone -fill none -stroke "$primary_color" -strokewidth 3 -draw "roundrectangle 1.5,1.5 198.5,198.5 15,15" \) -composite "$border_thumb_path" &>/dev/null
 done
 
-# Start thumbnail generation for remaining wallpapers in background
-(generate_thumbnails &) &>/dev/null
+# Hand cache generation to sway (swaymsg exec) so it outlives this UI;
+# fall back to a local background job if sway IPC is unavailable
+if ! swaymsg exec "'$HOME/.config/sway/scripts/wallpaper-switcher.sh' --generate-cache" >/dev/null 2>&1; then
+  (generate_thumbnails &) &>/dev/null
+fi
 
 # State variables
 QUERY=""
@@ -522,30 +537,23 @@ while true; do
   esac
 done
 
-# Restore terminal state for image/wallpaper application sequence
-tput cnorm
-tput rmcup
-printf '\e[?7h'
-kitty +kitten icat --clear 2>/dev/null
-clear
+# No terminal restore needed here: the kitty window is destroyed right after,
+# which takes the alternate screen buffer with it.
 if [ -n "$TMP_DIR" ]; then
   rm -rf "$TMP_DIR"
 fi
 
-# Apply chosen wallpaper using preserved backend
 FULL_PATH="${FILTERED_WALLPAPERS[current_idx]}"
 
 if [ -n "$FULL_PATH" ] && [ -f "$FULL_PATH" ]; then
-  # Run matugen: this both applies the wallpaper (via its own [config.wallpaper]
-  # hook, which calls awww) and regenerates all color templates (sway, waybar,
-  # wofi, gtk, kitty, etc.), reloading each one via their post_hooks.
-if command -v matugen &>/dev/null; then
-     matugen image "$FULL_PATH" -m dark --source-color-index 0 --lightness-dark 0.14 --contrast 0 >/dev/null 2>&1
-   fi
-
-  # Desktop notification indicating success
-  notify-send -a "Wallpaper Picker" -i "$FULL_PATH" "Theme Updated" "Applied wallpaper: $(basename "$FULL_PATH")"
-  echo "dark" >~/.cache/matugen_mode
+  esc_path=${FULL_PATH//\'/\'\\\'\'}
+  # apply-wallpaper.sh: instant awww wallpaper, waits out its 2s transition,
+  # then matugen + notify. Handed to sway so it outlives this window
+  # (single quoted string — no ';' for sway's parser to split on).
+  apply="$HOME/.config/sway/scripts/apply-wallpaper.sh"
+  if ! swaymsg exec "'$apply' '$esc_path'" >/dev/null 2>&1; then
+    sh "$apply" "$FULL_PATH" >/dev/null 2>&1 &
+  fi
 fi
 
 # Close host Kitty window process on normal completion

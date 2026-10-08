@@ -1,9 +1,6 @@
 [config]
 prefer = "value"
 
-[config.wallpaper]
-command = "awww img --transition-type grow {{ image }}  --transition-duration 4"
-set = true
 
 # ----------------------------------------------------
 #  WINDOW MANAGER & COMPOSITORS
