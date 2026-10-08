@@ -3,15 +3,20 @@
 # Toggle systemwide blur by flipping the global wildcard opacity rules
 # in windowrules.conf (swayfx only blurs windows with opacity < 1).
 # Terminals are exempted by fixed rules and always stay at opacity 1.
+#
+# The last ON opacity is remembered via the `# blur-preferred-opacity:`
+# marker line in windowrules.conf, so a value tuned by hand (e.g. for a
+# whiter wallpaper) survives an off -> on cycle instead of a fixed default.
 
 RULES="$HOME/.config/sway/conf/windowrules.conf"
+DEFAULT_ON=0.86
 
 if [ ! -f "$RULES" ]; then
   notify-send -u critical "Blur Toggle" "Missing $RULES"
   exit 1
 fi
 
-# Read the current value of the [app_id=".*"] wildcard rule
+# Current value of the [app_id=".*"] wildcard rule
 current=$(grep -m1 -oP '^\s*for_window\s+\[app_id="\.\*"\]\s+opacity\s+\K[0-9.]+' "$RULES")
 
 if [ -z "$current" ]; then
@@ -19,12 +24,23 @@ if [ -z "$current" ]; then
   exit 1
 fi
 
-# 0.86 (blur on) -> 1 (blur off), anything else -> 0.86
+set_preferred() {
+  if grep -qE '^\s*#\s*blur-preferred-opacity:' "$RULES"; then
+    sed -i -E "s|^\s*#\s*blur-preferred-opacity:.*|# blur-preferred-opacity: $1|" "$RULES"
+  else
+    sed -i "/^for_window \[class=\"\.\*\"\] opacity/i # blur-preferred-opacity: $1" "$RULES"
+  fi
+}
+
 if awk "BEGIN{exit !($current < 1)}"; then
+  # ON -> OFF: remember the value we are turning off
+  set_preferred "$current"
   new=1
   state="OFF"
 else
-  new=0.8
+  # OFF -> ON: restore the remembered value
+  preferred=$(grep -m1 -oP '^\s*#\s*blur-preferred-opacity:\s*\K[0-9.]+' "$RULES")
+  new=${preferred:-$DEFAULT_ON}
   state="ON"
 fi
 
