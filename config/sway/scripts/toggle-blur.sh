@@ -9,7 +9,7 @@
 # whiter wallpaper) survives an off -> on cycle instead of a fixed default.
 
 RULES="$HOME/.config/sway/conf/windowrules.conf"
-DEFAULT_ON=0.86
+DEFAULT_ON=0.84
 
 if [ ! -f "$RULES" ]; then
   notify-send -u critical "Blur Toggle" "Missing $RULES"

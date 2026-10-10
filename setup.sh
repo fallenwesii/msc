@@ -15,7 +15,7 @@ show_header() {
     gum style \
       --foreground 82 --border-foreground 82 --border double \
       --align center --width 50 --margin "1 2" --padding "2 4" \
-      "minimal6 dotfiles" "Setup Wizard"
+      "msc dotfiles" "Setup Wizard"
   else
     echo -e "${BLUE}"
     echo ""
@@ -25,7 +25,7 @@ show_header() {
 
 show_header
 
-# --- Package Lists ---
+# --- 1. Package Lists ---
 PACMAN_PKGS=(
   "swayidle" "gammastep"
   "xdg-desktop-portal-wlr" "xdg-desktop-portal-gtk" "waybar" "swaync" "wofi" "nwg-look"
@@ -38,11 +38,11 @@ PACMAN_PKGS=(
   "networkmanager" "network-manager-applet" "base-devel" "xorg-xhost" "quickshell"
   "neovim" "kvantum" "ghostty" "awww"
   "python3" "python-pyfiglet" "matugen" "autotiling"
-  "gsimplecal" "gamemode"
+  "gsimplecal" "gamemode" "hyprlock" "hyprpicker" "playerctl" "imagemagick"
 )
 
 AUR_PKGS=(
-  "swayfx"
+  "swayfx-git"
   "wlogout" "wofi-emoji" "brave-bin" "nm-connection-editor"
   "bibata-cursor-theme" "papirus-folders" "wooz-git"
 )
@@ -234,12 +234,7 @@ if command -v kvantummanager &>/dev/null; then
   confirm_and_link "$DOTFILES_DIR/kvantum-themes" "$HOME/.config/Kvantum" "kvantum-themes"
 fi
 
-# --- 7. Paths and Assets ---
-echo -e "${YELLOW}Setting up scripts and wallpapers...${NC}"
-
-
-
-# --- 8. Resolve Hardcoded Paths ---
+# --- 7. Resolve Hardcoded Paths ---
 # Fix hardcoded paths for the current user in configs
 echo -e "${YELLOW}Resolving hardcoded paths for your system...${NC}"
 
@@ -311,7 +306,7 @@ fi
 
 echo -e "${GREEN}Hardcoded path resolution complete.${NC}"
 
-# --- 9. Wallpapers ---
+# --- 8. Wallpapers ---
 echo -e "${YELLOW}Setting up wallpapers...${NC}"
 WALLPAPERS_DEST="$HOME/Pictures/wallpapers"
 
@@ -338,17 +333,26 @@ if [ -d "$WALLPAPERS_DEST" ]; then
   fi
 else
   mkdir -p "$WALLPAPERS_DEST"
-  cp "$DOTFILES_DIR/wallpapers/"* "$WALLPAPERS_DEST/"
+  cp "$DOTFILES_DIR/wallpapers/"* "$WALLPAPERS_DEST/" 2>/dev/null
   echo -e "${GREEN}Wallpapers installed to $WALLPAPERS_DEST${NC}"
 fi
 
-# --- 10. Final Verification ---
+# Light-mode wallpapers: curated set shown when light mode is toggled on.
+LIGHT_WALL_DEST="$WALLPAPERS_DEST/light-mode"
+if [ -d "$DOTFILES_DIR/wallpapers/light-mode" ]; then
+  mkdir -p "$LIGHT_WALL_DEST"
+  # Copy the curated set in (never clobber files the user already added).
+  cp -n "$DOTFILES_DIR/wallpapers/light-mode/"* "$LIGHT_WALL_DEST/" 2>/dev/null
+  echo -e "${GREEN}Light-mode wallpapers installed to $LIGHT_WALL_DEST${NC}"
+fi
+
+# --- 9. Final Verification ---
 echo -e "${YELLOW}Verifying important Sway packages...${NC}"
-SWAY_PKGS=("swayfx" "swayidle" "waybar")
+SWAY_PKGS=("swayfx-git" "swayidle" "waybar")
 for pkg in "${SWAY_PKGS[@]}"; do
   if ! check_package "$pkg" && ! yay -Qi "$pkg" &>/dev/null; then
     echo -e "${RED}$pkg is missing! Attempting to install...${NC}"
-    if [[ "$pkg" == "swayfx" ]]; then
+    if [[ "$pkg" == "swayfx-git" ]]; then
       yay -S --noconfirm "$pkg"
     else
       sudo pacman -S --noconfirm "$pkg"
@@ -356,7 +360,7 @@ for pkg in "${SWAY_PKGS[@]}"; do
   fi
 done
 
-# --- 11. Setting up themes ---
+# --- 10. Setting up themes ---
 echo -e "${YELLOW}Setting up themes...${NC}"
 read -p "Apply adw-gtk3 theme and generate dynamic colors with matugen? (y/n): " setup_themes
 if [[ "$setup_themes" == "y" || "$setup_themes" == "Y" ]]; then
@@ -406,11 +410,18 @@ if [[ "$setup_themes" == "y" || "$setup_themes" == "Y" ]]; then
     sleep 8
   fi
 
+  # Make Dolphin follow the system/GTK color scheme dynamically so its text
+  # stays visible when the light/dark mode toggles. '*' = follow system theme.
+  if command -v kwriteconfig6 &>/dev/null; then
+    kwriteconfig6 --file dolphinrc --group UiSettings --key ColorScheme '*'
+    echo -e "${GREEN}Dolphin set to follow system color scheme (ColorScheme='*').${NC}"
+  fi
+
 else
   echo -e "${BLUE}Skipping theme setup.${NC}"
 fi
 
-# --- 12. Icon Theme Setup (FairyWren) ---
+# --- 11. Icon Theme Setup (FairyWren) ---
 echo -e "${YELLOW}Setting up icon theme...${NC}"
 ICON_THEME_NAME="FairyWren_adwaita_Dark"
 ICON_DEST="$HOME/.icons/$ICON_THEME_NAME"
@@ -459,7 +470,7 @@ else
   fi
 fi
 
-# --- 14. Papirus Folders Theming ---
+# --- 12. Papirus Folders Theming ---
 echo -e "${YELLOW}Theming papirus folders...${NC}"
 # Set Papirus as icon theme for KDE/Qt applications
 kwriteconfig6 --file kdeglobals --group Icons --key Theme Papirus
@@ -467,16 +478,16 @@ echo -e "${GREEN}Set Papirus icon theme via kdeglobals.${NC}"
 
 # Configure passwordless sudo for papirus-folders (for dynamic folder recoloring via matugen)
 PAPIRUS_SUDOERS_FILE="/etc/sudoers.d/papirus-folders"
-if [ ! -f "$PAPERIUS_SUDOERS_FILE" ]; then
+if [ ! -f "$PAPIRUS_SUDOERS_FILE" ]; then
   echo -e "${BLUE}Creating sudoers rule for passwordless papirus-folders...${NC}"
-  echo "$USER ALL=(ALL) NOPASSWD: $(which papirus-folders)" | sudo tee "$PAPERIUS_SUDOERS_FILE" > /dev/null
-  sudo chmod 440 "$PAPERIUS_SUDOERS_FILE"
+  echo "$USER ALL=(ALL) NOPASSWD: $(which papirus-folders)" | sudo tee "$PAPIRUS_SUDOERS_FILE" > /dev/null
+  sudo chmod 440 "$PAPIRUS_SUDOERS_FILE"
   echo -e "${GREEN}Sudoers rule for papirus-folders created.${NC}"
 else
   echo -e "${GREEN}Sudoers rule for papirus-folders already exists.${NC}"
 fi
 
-# --- 15. Tuned Service and Passwordless tuned-adm ---
+# --- 13. Tuned Service and Passwordless tuned-adm ---
 echo -e "${YELLOW}Configuring Tuned and passwordless tuned-adm profile switching...${NC}"
 # Enable and start tuned service
 if systemctl is-active --quiet tuned; then
@@ -497,12 +508,12 @@ else
   echo -e "${GREEN}Sudoers rule for tuned-adm already exists.${NC}"
 fi
 
-# --- 16. QT/Kvantum Environment configuration ---
+# --- 14. QT/Kvantum Environment configuration ---
 echo -e "${YELLOW}Setting up QT/Kvantum environment...${NC}"
 systemctl --user daemon-reload
 echo -e "${GREEN}QT/Kvantum environment configured (via 90-msc.conf) and systemd user manager reloaded.\nA reboot is recommended for Qt/Kvantum theming${NC}"
 
-# --- 17. Final Message ---
+# --- 15. Final Message ---
 if command -v gum &>/dev/null; then
   gum style --foreground 82 --border-foreground 82 --border normal --align center --width 50 \
     "Setup Complete!" "Press Super + H for Keybinds Help"

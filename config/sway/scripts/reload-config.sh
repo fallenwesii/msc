@@ -23,7 +23,7 @@ pkill -SIGUSR1 kitty 2>/dev/null || true
 # 5. Hot-reload Sway window rules onto EXISTING windows (simulating Hyprland)
 # Apps don't control their own borders/sizes in Sway, Sway does. So instead of
 # restarting apps, we tell Sway to re-apply the rules right now.
-RULES_FILE="/home/wesii/.config/sway/conf/windowrules.conf"
+RULES_FILE="$HOME/.config/sway/conf/windowrules.conf"
 if [ -f "$RULES_FILE" ]; then
     grep "^for_window" "$RULES_FILE" | while read -r line; do
         # Extract everything after 'for_window ' (e.g., '[app_id="kitty"] floating enable')
@@ -34,7 +34,7 @@ fi
 
 # 6. Re-apply global preferences (borders, gaps, corner radius) to all windows
 # Parse values dynamically from appearance.conf
-APPEARANCE="/home/wesii/.config/sway/conf/appearance.conf"
+APPEARANCE="$HOME/.config/sway/conf/appearance.conf"
 
 if [ -f "$APPEARANCE" ]; then
     BORDER_WIDTH=$(grep "^default_border pixel" "$APPEARANCE" | awk '{print $3}')

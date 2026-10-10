@@ -3,10 +3,10 @@
 A comprehensive list of packages required for the **msc** environment.
 
 ### Core System & Compositor
-- **swayfx(AUR)**: Sway, but with eye candy(compositor).
+- **swayfx-git(AUR)**: Sway, but with eye candy(compositor).
 - **awww**: An Answer to your Wayland Wallpaper Woes (wallpaper manager).
 - **swayidle**: Idle management daemon for Wayland.
-- **gtklock**: GTK-based lockscreen for Wayland.
+- **hyprlock**: hyprland’s GPU-accelerated screen locking utility, but works on other wayland window managers
 - **gammastep**: blue light filter.
 - **xdg-desktop-portal-wlr**: xdg-desktop-portal backend for wlroots.
 - **xdg-desktop-portal-gtk**: GTK backend for xdg-desktop-portal (file pickers).
@@ -28,6 +28,8 @@ A comprehensive list of packages required for the **msc** environment.
 - **slurp**: Select a region in a Wayland compositor (used with grim).
 - **wl-clipboard**: Wayland command-line copy/paste utilities.
 - **cliphist**: Wayland clipboard history manager.
+- **hyprpicker**: Wayland color picker (bound to Super+Ctrl+P).
+- **imagemagick**: Image toolkit (the wallpaper picker uses `magick` for thumbnails).
 - **brightnessctl**: Lightweight tool to read and control device brightness.
 - **pavucontrol**: PulseAudio Volume Control (GUI).
 - **polkit-gnome**: GNOME authentication agent for Polkit.
@@ -47,6 +49,7 @@ A comprehensive list of packages required for the **msc** environment.
 ### Audio & Bluetooth
 - **pipewire**: Low-latency audio/video router and processor.
 - **wireplumber**: Session manager for PipeWire.
+- **playerctl**: MPRIS media-key controller (play/pause/next/prev).
 - **blueman**: GTK+ Bluetooth Manager.
 - **bluez**: Official Linux Bluetooth protocol stack.
 - **bluez-utils**: Development and debugging utilities for the bluetooth stack.
@@ -67,7 +70,6 @@ A comprehensive list of packages required for the **msc** environment.
 - **qt5-wayland**: Wayland platform plugin for Qt5.
 - **qt5ct**: Qt5 Configuration Tool.
 - **qt6ct**: Qt6 Configuration Tool.
-- **python-pywall (AUR)**: Generate colorschemes from images.
 - **gtk-engine-murrine (AUR)**: Murrine GTK2 engine (required for many GTK themes).
 - **bibata-cursor-theme (AUR)**: Popular material-based cursor theme.
 - **papirus-folders (AUR)**: Tool to recolor Papirus folders with Material You colors.

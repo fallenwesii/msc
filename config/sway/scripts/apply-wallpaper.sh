@@ -41,5 +41,9 @@ if command -v matugen >/dev/null 2>&1; then
   matugen image "$IMAGE" -m dark --source-color-index 0 --lightness-dark 0.14 --contrast 0 >/dev/null 2>&1
 fi
 
+# Keep gsettings in sync (picker always applies a dark palette).
+command -v gsettings >/dev/null 2>&1 &&
+  gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+
 notify-send -a 'Wallpaper Picker' -i "$IMAGE" 'Theme Updated' "Applied wallpaper: ${IMAGE##*/}" 2>/dev/null
 echo dark >"$HOME/.cache/matugen_mode"

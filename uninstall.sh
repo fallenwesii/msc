@@ -129,5 +129,26 @@ if command -v flatpak &>/dev/null; then
   echo -e "${GREEN}Flatpak overrides removed.${NC}"
 fi
 
-# --- 6. Final Message ---
+# --- 6. Remove sudoers rules created by setup ---
+SUDOERS_FILES=("/etc/sudoers.d/papirus-folders" "/etc/sudoers.d/99-tuned-adm")
+EXISTING_SUDOERS=()
+for f in "${SUDOERS_FILES[@]}"; do
+  [ -f "$f" ] && EXISTING_SUDOERS+=("$f")
+done
+
+if [ ${#EXISTING_SUDOERS[@]} -gt 0 ]; then
+  echo -e "\n${YELLOW}The following sudoers rules were found:${NC}"
+  printf '  %s\n' "${EXISTING_SUDOERS[@]}"
+  read -p "Remove them? (requires sudo) (y/n): " rm_sudoers
+  if [[ "$rm_sudoers" == "y" || "$rm_sudoers" == "Y" ]]; then
+    sudo rm -f "${EXISTING_SUDOERS[@]}"
+    echo -e "${GREEN}Sudoers rules removed.${NC}"
+  else
+    echo -e "${BLUE}Skipped removing sudoers rules.${NC}"
+  fi
+else
+  echo -e "${BLUE}No msc sudoers rules found to remove.${NC}"
+fi
+
+# --- 7. Final Message ---
 echo -e "\n${GREEN}Uninstall Complete!${NC}"
